@@ -162,14 +162,10 @@
     // show sidebar content on map load
     sidebar.open('home');
 
-    // define the map name
-    const name = document.getElementById('map-name').value;
-
     // define a function to change the map title
     function changeTitle() {
       // define the map name
       const name = document.getElementById('map-name').value;
-      console.log(name);
       // add it to the sidebar header
       $(".sidebar-content h1").html(name + '<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>');
       // add it to the page tab
@@ -198,6 +194,8 @@
 
     // define a function to read the user-selected csv
     function readCSV(csv) {
+      // define the map name
+      const name = document.getElementById('map-name').value;
       // identify the input file
       const file = csv.files[0];
       // create a working url to the input csv file
@@ -226,12 +224,12 @@
         // add additional sidebar contents
         document.getElementById("download-code").style.display="block";
         // call the downloadCode function
-        downloadCode(markersGeoJSON);
+        downloadCode(markersGeoJSON, name);
       });
     }; // end readCSV function
 
     // define the function to download map code
-    function downloadCode(markersGeoJSON) {
+    function downloadCode(markersGeoJSON, name) {
       // create a new index.html file and allow user to save
       const html = '<!DOCTYPE html>' +
                     '<html>' +
@@ -272,7 +270,7 @@
                                 '<br>' +
                                 '<b><h2>About This Project</h2></b>' +
                                 '<span class="br"></span>' +
-                                '<h3>This application was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry.</h3>' +
+                                '<h3>This map was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry.</h3>' +
                                 '<p style="padding-bottom:0px"></p>' +
                               '</div>' +
                             '</div>' +
