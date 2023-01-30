@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!-- this is the title of the page (not the map) and will appear in the browser tab -->
+  <title>CSV-2-Storymap</title>
+  <!-- this controls the layout on mobile browsers, if needed -->
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">-->
+  <!-- reference existing css libraries below -->
+  <!-- load leaflet.css library here -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <!-- for icon support -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" />
+  <!-- for a collapsible sidebar -->
+  <link rel="stylesheet" href="css/leaflet-sidebar.css" />
+  <!-- custom css styles go below -->
+  <style>
+
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    html,
+    body,
+    #map {
+      height: 100%;
+      font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    /* make these divs invisible initially */
+    #download-code {
+      display: none;
+    }
+
+    i {
+      color: white;
+    }
+
+    p {
+      font-size: 12px;
+    }
+
+    h2 {
+      font-size: 13px;
+      margin-bottom: 0px;
+      margin-top: 0px;
+    }
+
+    h3 {
+      font-size: 12px;
+      font-weight: normal;
+      margin-bottom: 0px;
+      margin-top: 0px;
+    }
+
+    @media (max-width: 1000px) {
+      .sidebar-header {
+        font-size: 15px;
+      }
+
+      p {
+        font-size: 11px;
+      }
+
+      h2 {
+        font-size: 12px;
+        margin-bottom: 0px;
+        margin-top: 0px;
+      }
+
+      h3 {
+        font-size: 11px;
+        font-weight: normal;
+        margin-bottom: 0px;
+        margin-top: 0px;
+      }
+
+      .resize {
+        width: 200px;
+        height: auto;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <!-- the sidebar div -->
+  <div id="sidebar" class="sidebar collapsed">
+    <!-- Nav tabs -->
+    <div class="sidebar-tabs">
+      <ul role="tablist">
+        <li><a href="#home" role="tab"><i class="fa fa-bars"></i></a></li>
+      </ul>
+    </div>
+    <!-- the sidebar contents -->
+    <div class="sidebar-content">
+      <div class="sidebar-pane" id="home">
+        <!-- map title goes here -->
+        <h1 class="sidebar-header">CSV-2-Storymap<span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+        <br>
+        <div>
+          <br>
+          <b><h2>About This Project</h2></b>
+          <span class='br'></span>
+          <h3>This application was created to allow users to generate an open source story map quickly and easily from a formatted csv file. After adding your selected spreadsheet, you should see markers for each entry colored by the provided
+            chapter. These chapters will also appear in the dropdown menu so that you can filter your content by the selected category. Enjoy!</h3>
+          <p style='padding-bottom:0px'></p>
+        </div>
+        <!-- title change form -->
+        <form>
+          <p><b><label for="fname">Choose a title for your story map:</label></b><p>
+          <input type="text" id="map-name" name="map-name">
+          <button type='button' onclick="changeTitle()">Submit</button>
+        </form>
+        <div id="browse-buttons">
+          <!-- csv selection instructions -->
+          <p><b>Browse for the input csv file.</b></p>
+          <input type="file" id="fileBox" />
+        </div>
+        <!-- button to download code -->
+        <div id="download-code">
+          <p><b>Download your story map code.</b></p>
+          <button id="download-button" type='button' onclick="document.getElementById('link').click()">Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- the map container -->
+  <div id="map" class="sidebar-map"></div>
+  <!-- reference existing js libraries below -->
+  <!-- load leaflet.js library here -->
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <!-- d3js for requesting files into web application -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"></script>
+  <!-- jquery for easy access to divs -->
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <!-- for the collapsible sidebar -->
+  <script src="js/leaflet-sidebar.js"></script>
+  <!-- custom javascript goes below -->
+  <script>
+    // instantiate and define a Leaflet map
+    const map = L.map('map', {
+      center: [0, -70], // give map initial coordinates
+      zoom: 2 // set initial zoom level
+    });
+    // add CartoDB Voyager map tile service to the map
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+    // add a scale bar to the map
+    L.control.scale({
+      position: 'bottomright'
+    }).addTo(map);
+
+    // define and add the sidebar to the map (we may want to swap for sidebar-v2: https://github.com/Turbo87/sidebar-v2)
+    const sidebar = L.control.sidebar('sidebar').addTo(map);
+
+    // show sidebar content on map load
+    sidebar.open('home');
+
+    // define the map name
+    const name = document.getElementById('map-name').value;
+
+    // define a function to change the map title
+    function changeTitle() {
+      // define the map name
+      const name = document.getElementById('map-name').value;
+      console.log(name);
+      // add it to the sidebar header
+      $(".sidebar-content h1").html(name + '<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>');
+      // add it to the page tab
+      document.title = document.querySelector('input').value;
+      // call the closeSidebar function
+      closeSidebar();
+    }; // end changeTitle function
+
+    // define a function to close the sidebar
+    function closeSidebar() {
+      // listen for a click on the caret icon
+      document.querySelector("span.sidebar-close").addEventListener('click', (e) => {
+        // close the sidebar
+        sidebar.close('home');
+      });
+    };
+
+    // on load, provide an option to add a csv file
+    window.onload = function() {
+      // after selecting the input csv...
+      document.getElementById('fileBox').onchange = function() {
+        // read the csv and create the dropdown from the csv contents
+        readCSV(this);
+      }
+    };
+
+    // define a function to read the user-selected csv
+    function readCSV(csv) {
+      // identify the input file
+      const file = csv.files[0];
+      // create a working url to the input csv file
+      const path = (window.URL || window.webkitURL).createObjectURL(file);
+      // use d3 to access and parse spreadsheet data
+      d3.csv(path).then(function(data) {
+        // make an empty geoJSON object
+        markersGeoJSON = {
+          "type": "FeatureCollection",
+          "features": []
+        };
+        // for each entry in the csv...
+        data.forEach(function(entry) {
+          // define a JSON feature
+          feature = {
+            "type": "Feature",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [entry.X, entry.Y] // use the X and Y columns from the csv
+            },
+            "properties": entry // add all columns as properties
+          }
+          // push the feature to the empty markersGeoJSON
+          markersGeoJSON.features.push(feature);
+        });
+        // add additional sidebar contents
+        document.getElementById("download-code").style.display="block";
+        // call the downloadCode function
+        downloadCode(markersGeoJSON);
+      });
+    }; // end readCSV function
+
+    // define the function to download map code
+    function downloadCode(markersGeoJSON) {
+      // create a new index.html file and allow user to save
+      const html = '<!DOCTYPE html>' +
+                    '<html>' +
+                      '<head>' +
+                        '<title>' + name + '</title>' +
+                        '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />' +
+                        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" />' +
+                        '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/noerw/leaflet-sidebar-v2/css/leaflet-sidebar.css" />' +
+                        '<style>' +
+                          'body {padding: 0;margin: 0;}' +
+                          'html,body,#map {height: 100%;font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;}' +
+                          '#download-code {display: none;}' +
+                          'i {color: white;}' +
+                          'p {font-size: 12px;}' +
+                          'h2 {font-size: 13px;margin-bottom: 0px;margin-top: 0px;}' +
+                          'h3 {font-size: 12px;font-weight: normal;margin-bottom: 0px;margin-top: 0px;}' +
+                          '@media (max-width: 1000px) {' +
+                            '.sidebar-header {font-size: 15px;}' +
+                            'p {font-size: 11px;}' +
+                            'h2 {font-size: 12px;margin-bottom: 0px;margin-top: 0px;}' +
+                            'h3 {font-size: 11px;font-weight: normal;margin-bottom: 0px;margin-top: 0px;}' +
+                            '.resize {width: 200px;height: auto;}' +
+                          '}' +
+                        '</style>' +
+                      '</head>' +
+                      '<body>' +
+                        '<div id="sidebar" class="sidebar collapsed">' +
+                          '<div class="sidebar-tabs">' +
+                            '<ul role="tablist">' +
+                              '<li><a href="#home" role="tab"><i class="fa fa-bars"></i></a></li>' +
+                            '</ul>' +
+                          '</div>' +
+                          '<div class="sidebar-content">' +
+                            '<div class="sidebar-pane" id="home">' +
+                              '<h1 class="sidebar-header">' + name + '<span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>' +
+                              '<br>' +
+                              '<div>' +
+                                '<br>' +
+                                '<b><h2>About This Project</h2></b>' +
+                                '<span class="br"></span>' +
+                                '<h3>This application was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry.</h3>' +
+                                '<p style="padding-bottom:0px"></p>' +
+                              '</div>' +
+                            '</div>' +
+                          '</div>' +
+                        '</div>' +
+                        '<div id="map" class="sidebar-map"></div>' +
+                        '<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"><\/script>' +
+                        '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"><\/script>' +
+                        '<script src="https://code.jquery.com/jquery-3.1.1.min.js"><\/script>' +
+                        '<script src="https://cdn.jsdelivr.net/gh/noerw/leaflet-sidebar-v2/js/leaflet-sidebar.js"><\/script>' +
+                        '<script>var storyMarkers = ' + JSON.stringify(markersGeoJSON) + ';<\/script>' +
+                        '<script>' +
+                          'const map = L.map("map", {center: [0, -70], zoom: 2 });' +
+                          'L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png").addTo(map);' +
+                          'L.control.scale({position: "bottomright"}).addTo(map);' +
+                          'const sidebar = L.control.sidebar("sidebar").addTo(map);' +
+                          'sidebar.open("home");' +
+                        '<\/script>' +
+                      '<\/body>' +
+                    '</html>';
+
+      const a = document.createElement('a');
+      const linkText = document.createTextNode("");
+      a.appendChild(linkText);
+      a.id = 'link';
+      a.style.visibility = "hidden";
+      a.title = "my title text";
+      a.href = "data:text/html," + encodeURIComponent(html);
+      a.download = "index.html";
+      document.getElementById('download-button').appendChild(a);
+    }; // end downloadCode function
+
+  </script>
+</body>
+
+</html>
