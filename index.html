@@ -29,7 +29,7 @@
     }
 
     /* make these divs invisible initially */
-    #download-code {
+    #download-code, #dropdown-instructions, #map_parameters, #sidebar-info {
       display: none;
     }
 
@@ -112,12 +112,25 @@
         <form>
           <p><b><label for="fname">Choose a title for your story map:</label></b><p>
           <input type="text" id="map-name" name="map-name">
-          <button type='button' onclick="changeTitle()">Submit</button>
+          <button id="myBtn" type='button' onclick="changeTitle()">Submit</button>
         </form>
         <div id="browse-buttons">
           <!-- csv selection instructions -->
           <p><b>Browse for the input csv file.</b></p>
           <input type="file" id="fileBox" />
+        </div>
+        <!-- dropdown filter instructions -->
+        <div id="dropdown-instructions">
+          <p><b>Choose from the options in the drop-down menu to filter results by the type of entry.</b></p>
+        </div>
+        <!-- the form contents -->
+        <form id="map_parameters" name="map_parameters" action="#" accept-charset="utf-8" class="inlineForm">
+          <select id="chapter-select" class="div-toggle" data-target=".my-info-1"></select>
+        </form>
+        <div id="sidebar-info" class="my-info-1">
+          <div id="content-info" class="contentinfo hide">
+            <p class="lorem">Apply some filters to see descriptive content.</p>
+          </div>
         </div>
         <!-- button to download code -->
         <div id="download-code">
@@ -136,6 +149,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"></script>
   <!-- jquery for easy access to divs -->
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <!-- for svg icons -->
+  <script src="js/svg-icon.js"></script>
   <!-- for the collapsible sidebar -->
   <script src="js/leaflet-sidebar.js"></script>
   <!-- custom javascript goes below -->
@@ -161,6 +176,60 @@
 
     // show sidebar content on map load
     sidebar.open('home');
+
+    const input = document.getElementById("map-name");
+
+    // Execute a function when the user presses a key on the keyboard
+    input.addEventListener("keypress", function(event) {
+      // If the user presses the "Enter" key on the keyboard
+      if (event.key === "Enter") {
+        // Cancel the default action, if needed
+        event.preventDefault();
+        // Trigger the button element with a click
+        document.getElementById("myBtn").click();
+      }
+    });
+
+
+// CHECK IF THIS IS STILL NEEDED
+    // define an empty array to hold sidebar content
+    const chapterContent = [];
+    // define an empty array to hold the selected chapter
+    const chapterSelected = [];
+    // define an empty layer group to hold filtered markers
+    const selectedLayers = L.layerGroup().addTo(map);
+    // define the sidebar information
+    const info = document.getElementById("content-info");
+    // define an empty array to hold coordinates for matching
+    const scrollCoords = [];
+    // define an empty array to hold the 'data-point' (coordinate) attribute of each story div
+    const points = [];
+    // define an empty array to hold all chapter values
+    const chapterNames = [];
+    // define an empty array to hold the offset for the new map center
+    const centerDiff = [];
+    // the following gets the approximate center of the visible map when the sidebar is open at zoom 14
+    const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;
+    const winHalf = winWidth / 2;
+    const winThird = winWidth / 3;
+    const winDiff = (winHalf - winThird) / 4;
+
+    // push the winDiff value to the empty array
+    centerDiff.push(winDiff);
+
+    // this listens for a window resize event and gets the approximate center of the visible map at zoom 14
+    window.addEventListener('resize', function() {
+      // empty the centerDiff array
+      centerDiff.length = 0;
+      const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;
+      const winHalf = winWidth / 2;
+      const winThird = winWidth / 3;
+      const winDiff = (winHalf - winThird) / 4;
+      // push the new winDiff value to the empty array
+      centerDiff.push(winDiff);
+    });
+// CHECK IF ABOVE IS STILL NEEDED
+
 
     // define a function to change the map title
     function changeTitle() {
@@ -221,12 +290,57 @@
           // push the feature to the empty markersGeoJSON
           markersGeoJSON.features.push(feature);
         });
+        // call the _drawMap function
+        drawMap(markersGeoJSON);
         // add additional sidebar contents
         document.getElementById("download-code").style.display="block";
         // call the downloadCode function
         downloadCode(markersGeoJSON, name);
       });
     }; // end readCSV function
+
+    // define a function to draw the map with the input markers
+    function drawMap(markersGeoJSON) {
+      // iterate through each feature of the data and...
+      (markersGeoJSON.features).forEach(function(entry){
+        // push each chapter value to the empty chapterNames array
+        chapterNames.push(entry.properties.chapter);
+      });
+      // filter the chapterNames array for unique values and define
+      const eachChapter = chapterNames.filter((v, i, a) => a.indexOf(v) === i);
+      // establish the initial dropdown html form contents
+      let tmpHTML = '<select><option value="0">All</option>';
+      // for each unique chapter, create a dropdown select option
+      for (let csv = 0; csv < eachChapter.length; csv++) tmpHTML += '<option value="' + eachChapter[csv] + '">' + eachChapter[csv] + '</option>';
+      tmpHTML += '</select>';
+      // add this content to the dynamic dropdown
+      document.getElementById("chapter-select").innerHTML = tmpHTML;
+      // construct empty JavaScript Map (keys mapped to values)
+      const paletteMap = new Map();
+      // map all chapters to a dynamic RGB color string
+      for (let i = 0; i < eachChapter.length; i++) {
+        var palette;
+        const r = Math.floor(Math.random() * 255);
+        const g = Math.floor(Math.random() * 255);
+        const b = Math.floor(Math.random() * 255);
+        palette = "rgb(" + r + "," + g + "," + b + ")";
+        paletteMap.set(eachChapter[i], palette)
+      };
+      // define a leaflet geojson layer with the markers
+      const markers = L.geoJSON(markersGeoJSON, {
+        // assign the appropriate icon to each point
+        pointToLayer: function(feature, latlng) {
+          return L.marker(latlng, {
+            icon: new L.DivIcon.SVGIcon({
+              color: paletteMap.get(feature.properties.chapter), // get dynamic RGB color string
+              fillColor: paletteMap.get(feature.properties.chapter), // get dynamic RGB color string
+              fillOpacity: 0.8,
+              iconSize: [25, 35]
+            })
+          });
+        },
+      }).addTo(map);
+    }; // end drawMap function
 
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
@@ -241,7 +355,6 @@
                         '<style>' +
                           'body {padding: 0;margin: 0;}' +
                           'html,body,#map {height: 100%;font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;}' +
-                          '#download-code {display: none;}' +
                           'i {color: white;}' +
                           'p {font-size: 12px;}' +
                           'h2 {font-size: 13px;margin-bottom: 0px;margin-top: 0px;}' +
@@ -273,6 +386,17 @@
                                 '<h3>This map was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry.</h3>' +
                                 '<p style="padding-bottom:0px"></p>' +
                               '</div>' +
+                              '<div id="dropdown-instructions">' +
+                                '<p><b>Choose from the options in the drop-down menu to filter results by the type of entry.</b></p>' +
+                              '</div>' +
+                              '<form id="map_parameters" name="map_parameters" action="#" accept-charset="utf-8" class="inlineForm">' +
+                                '<select id="chapter-select" class="div-toggle" data-target=".my-info-1"></select>' +
+                              '</form>' +
+                              '<div id="sidebar-info" class="my-info-1">' +
+                                '<div id="content-info" class="contentinfo hide">' +
+                                  '<p class="lorem">Apply some filters to see descriptive content.</p>' +
+                                '</div>' +
+                              '</div>' +
                             '</div>' +
                           '</div>' +
                         '</div>' +
@@ -280,14 +404,58 @@
                         '<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"><\/script>' +
                         '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"><\/script>' +
                         '<script src="https://code.jquery.com/jquery-3.1.1.min.js"><\/script>' +
+                        '<script src="https://cdn.jsdelivr.net/gh/jebowe3/CSV-2-Storymap/js/svg-icon.js"><\/script>' +
                         '<script src="https://cdn.jsdelivr.net/gh/jebowe3/CSV-2-Storymap/js/leaflet-sidebar.js"><\/script>' +
-                        '<script>var storyMarkers = ' + JSON.stringify(markersGeoJSON) + ';<\/script>' +
+                        '<script>const markersGeoJSON = ' + JSON.stringify(markersGeoJSON) + ';<\/script>' +
                         '<script>' +
                           'const map = L.map("map", {center: [0, -70], zoom: 2 });' +
                           'L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png").addTo(map);' +
                           'L.control.scale({position: "bottomright"}).addTo(map);' +
                           'const sidebar = L.control.sidebar("sidebar").addTo(map);' +
                           'sidebar.open("home");' +
+                          'const chapterContent = [];' +
+                          'const chapterSelected = [];' +
+                          'const selectedLayers = L.layerGroup().addTo(map);' +
+                          'const info = document.getElementById("content-info");' +
+                          'const scrollCoords = [];' +
+                          'const points = [];' +
+                          'const chapterNames = [];' +
+                          'const centerDiff = [];' +
+                          'const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;' +
+                          'const winHalf = winWidth / 2;' +
+                          'const winThird = winWidth / 3;' +
+                          'const winDiff = (winHalf - winThird) / 4;' +
+                          'centerDiff.push(winDiff);' +
+                          'window.addEventListener("resize", function() {' +
+                            'centerDiff.length = 0;' +
+                            'const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;' +
+                            'const winHalf = winWidth / 2;' +
+                            'const winThird = winWidth / 3;' +
+                            'const winDiff = (winHalf - winThird) / 4;' +
+                            'centerDiff.push(winDiff);' +
+                          '});' +
+                          '(markersGeoJSON.features).forEach(function(entry){' +
+                            'chapterNames.push(entry.properties.chapter);' +
+                          '});' +
+                          'const eachChapter = chapterNames.filter((v, i, a) => a.indexOf(v) === i);' +
+                          'let tmpHTML = ' + "'" + '<select><option value=' + '"0"'+ '>All</option>' + "';" +
+                          'for (let csv = 0; csv < eachChapter.length; csv++) tmpHTML +=' + '\'<option value="\'' + ' + eachChapter[csv] + ' + '\'">\'' + ' + eachChapter[csv] + ' + '\'</option>\';' +
+                          'tmpHTML += "</select>";' +
+                          'document.getElementById("chapter-select").innerHTML = tmpHTML;' +
+                          'const paletteMap = new Map();' +
+                          'for (let i = 0; i < eachChapter.length; i++) {var palette; const r = Math.floor(Math.random() * 255); const g = Math.floor(Math.random() * 255); const b = Math.floor(Math.random() * 255); palette = "rgb(" + r + "," + g + "," + b + ")"; paletteMap.set(eachChapter[i], palette)};' +
+                          'const markers = L.geoJSON(markersGeoJSON, {' +
+                            'pointToLayer: function(feature, latlng) {' +
+                              'return L.marker(latlng, {' +
+                                'icon: new L.DivIcon.SVGIcon({' +
+                                  'color: paletteMap.get(feature.properties.chapter),' +
+                                  'fillColor: paletteMap.get(feature.properties.chapter),' +
+                                  'fillOpacity: 0.8,' +
+                                  'iconSize: [25, 35]' +
+                                '})' +
+                              '});' +
+                            '},' +
+                          '}).addTo(map);' +
                         '<\/script>' +
                       '<\/body>' +
                     '</html>';
