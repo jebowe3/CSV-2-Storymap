@@ -404,6 +404,10 @@
         // call the filterMarkers function on the markers
         filterMarkers(markers);
       };
+      // call the scrollMarkers function on the markers
+      scrollMarkers(markers);
+      // call the scrollOpenPopup function on the markers
+      scrollOpenPopup(markers);
     }; // end drawMap function
 
     // define the filterMarkers function
@@ -466,7 +470,7 @@
       // define the desired zoom setting when going to a point of interest
       const firstStoryZoom = 14;
       // zoom to the marker connected to the story div
-      map.setView([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+      map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
       // iterate through each marker
       markers.eachLayer(function(layer) {
         // define the coordinates of each marker
@@ -477,12 +481,89 @@
           // fire a click on the marker, opening the popup
           layer.fire('click');
           layer.setZIndexOffset(1000);
-          map.setView([layer.getLatLng().lat, layer.getLatLng().lng], 14);
+          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);
         } else {
           layer.setZIndexOffset(0);
         }
       });
     }; // end of filter markers function
+
+    // define the scrollMarkers function
+    function scrollMarkers(markers) {
+      var scrollTimeout = null;
+       // detects a scroll event in the sidebar
+       $('.sidebar-content').on("scroll", function(e) {
+         // with each scroll, empty the scrollCoords array
+         scrollCoords.length = 0;
+         // iterate through each story div in the sidebar
+         $('.story').each(function() {
+           // gets the horizontal line crossing the middle of the window
+           const midLine = $(window).height() / 2;
+           // defines the vertical start of each story div
+           const divStart = $(this).offset().top;
+           // defines the vertical end of each story div
+           const divEnd = divStart + $(this)[0].offsetHeight;
+           // defines the latitude associated with the story div
+           const lat = $(this)[0].getAttribute('data-point').split(',')[0];
+           // defines the longitude associated with the story div
+           const lng = $(this)[0].getAttribute('data-point').split(',')[1];
+           // define the desired zoom setting when going to a point of interest
+           const zoom = 14;
+           // if the start and end of the div crosses the middle of the sidebar...
+           if (divStart < midLine && divEnd > midLine) {
+             // narrow down the points array to the last two points in the list
+             points.splice(0, points.length - 1);
+             // define a story div point
+             const point = $(this)[0].getAttribute('data-point');
+             // push the point into the points array
+             points.push(point);
+             // if the last point does not equal the point before it...
+             if (points[0] != points[1]) {
+               if (scrollTimeout) clearTimeout(scrollTimeout);
+               scrollTimeout = setTimeout(function() {
+                 // zoom to the marker connected to the story div
+                 map.flyTo([lat, lng], zoom);
+               }, 200);
+             } // this condition prevents jarring associated with scrolling by waiting for a point change to reset the map view
+             // push the story coordinates to the scrollCoords array
+             scrollCoords.push(lng, lat);
+           }
+           // upon a change in the window size...
+           window.addEventListener('resize', function() {
+             // if the start and end of the div crosses the middle of the sidebar...
+             if (divStart < midLine && divEnd > midLine) {
+               // zoom to the marker connected to the story div
+               map.flyTo([lat, lng - centerDiff[0]], 14);
+             }
+           });
+         });
+       });
+    }; // end of scrollMarkers() function
+
+    // define the scrollOpenPopup function
+    function scrollOpenPopup(markers) {
+      // make a function that clicks the correct marker when scrolling stops
+      var scrollTimeout = null;
+      // detects a scroll event in the sidebar
+      $('.sidebar-content').on("scroll", function() {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function() {
+          // iterate through each marker
+          markers.eachLayer(function(layer){
+            // define the coordinates of each marker
+            const markerCoords = layer.feature.geometry.coordinates;
+            // if the first story coordinates match the marker coordinates...
+            if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {
+              // fire a click on the marker, opening the popup
+              layer.fire('click');
+              layer.setZIndexOffset(1000);
+            } else {
+              layer.setZIndexOffset(0);
+            }
+          });
+        }, 200); // set the timeout period
+      });
+    };
 
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
@@ -619,6 +700,8 @@
                           "$('#chapter-select')[0].onchange = function(e) {" +
                             'filterMarkers(markers);' +
                           '};' +
+                          'scrollMarkers(markers);' +
+                          'scrollOpenPopup(markers);' +
                           'function filterMarkers(markers) {' +
                             'chapterContent.length = 0;' +
                             'info.innerHTML = chapterContent.join("");' +
@@ -650,16 +733,64 @@
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                             'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
                             'const firstStoryZoom = 14;' +
-                            'map.setView([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
+                            'map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
                             'markers.eachLayer(function(layer) {' +
                               'const markerCoords = layer.feature.geometry.coordinates;' +
                               'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
                                 'layer.fire(\'click\');' +
                                 'layer.setZIndexOffset(1000);' +
-                                'map.setView([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
+                                'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
                               '} else {' +
                                 'layer.setZIndexOffset(0);' +
                               '}' +
+                            '});' +
+                          '};' +
+                          'function scrollMarkers(markers) {' +
+                            'var scrollTimeout = null;' +
+                            '$(\'.sidebar-content\').on("scroll", function(e) {' +
+                              'scrollCoords.length = 0;' +
+                              '$(\'.story\').each(function() {' +
+                                'const midLine = $(window).height() / 2;' +
+                                'const divStart = $(this).offset().top;' +
+                                'const divEnd = divStart + $(this)[0].offsetHeight;' +
+                                'const lat = $(this)[0].getAttribute(\'data-point\').split(\',\')[0];' +
+                                'const lng = $(this)[0].getAttribute(\'data-point\').split(\',\')[1];' +
+                                'const zoom = 14;' +
+                                'if (divStart < midLine && divEnd > midLine) {' +
+                                  'points.splice(0, points.length - 1);' +
+                                  'const point = $(this)[0].getAttribute(\'data-point\');' +
+                                  'points.push(point);' +
+                                  'if (points[0] != points[1]) {' +
+                                    'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                                    'scrollTimeout = setTimeout(function() {' +
+                                      'map.flyTo([lat, lng], zoom);' +
+                                    '}, 200);' +
+                                  '}' +
+                                  'scrollCoords.push(lng, lat);' +
+                                '}' +
+                                'window.addEventListener(\'resize\', function() {' +
+                                  'if (divStart < midLine && divEnd > midLine) {' +
+                                    'map.flyTo([lat, lng - centerDiff[0]], 14);' +
+                                  '}' +
+                                '});' +
+                              '});' +
+                            '});' +
+                          '};' +
+                          'function scrollOpenPopup(markers) {' +
+                            'var scrollTimeout = null;' +
+                            '$(\'.sidebar-content\').on("scroll", function() {' +
+                              'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                              'scrollTimeout = setTimeout(function() {' +
+                                'markers.eachLayer(function(layer){' +
+                                  'const markerCoords = layer.feature.geometry.coordinates;' +
+                                  'if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {' +
+                                    'layer.fire(\'click\');' +
+                                    'layer.setZIndexOffset(1000);' +
+                                  '} else {' +
+                                    'layer.setZIndexOffset(0);' +
+                                  '}' +
+                                '});' +
+                              '}, 200);' +
                             '});' +
                           '};' +
                         '<\/script>' +
