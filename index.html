@@ -37,6 +37,31 @@
       color: white;
     }
 
+    /* control the popup size and allow for scrolling of overflow */
+    .leaflet-popup-content-wrapper {
+      line-height: 10px;
+      border-radius: 2px;
+      height: 10 px;
+      max-height: 300px;
+      max-width: 350px;
+      overflow: auto;
+    }
+
+    .leaflet-popup {
+      position: absolute;
+      text-align: center;
+    }
+
+    .leaflet-popup-content {
+      min-width: 100 px !important;
+    }
+
+    /* resizes the images in the sidebar */
+    .resize {
+      width: 300px;
+      height: auto;
+    }
+
     p {
       font-size: 12px;
     }
@@ -52,6 +77,16 @@
       font-weight: normal;
       margin-bottom: 0px;
       margin-top: 0px;
+    }
+
+    .br {
+      display: block;
+      margin-bottom: 0em;
+    }
+
+    .brmedium {
+      display: block;
+      margin-bottom: 1em;
     }
 
     @media (max-width: 1000px) {
@@ -258,6 +293,10 @@
       document.getElementById('fileBox').onchange = function() {
         // read the csv and create the dropdown from the csv contents
         readCSV(this);
+        // add additional sidebar contents
+        document.getElementById("dropdown-instructions").style.display="block";
+        document.getElementById("map_parameters").style.display="block";
+        document.getElementById("sidebar-info").style.display="block";
       }
     };
 
@@ -339,8 +378,111 @@
             })
           });
         },
+        // on each marker...
+        onEachFeature: function(feature, layer) {
+          // define the layer properties
+          const props = feature.properties;
+          // bind popup content
+          layer.bindPopup('<b><h2>' + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + '<hr>' + "<span class='br'></span>" + "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" +
+            props.description + "</h3>");
+          // change the cursor to a pointer on marker hover
+          layer.on('mouseover', function() {
+            $('.leaflet-container').css('cursor', 'pointer');
+          });
+          // change the cursor back to default on mouseout
+          layer.on('mouseout', function() {
+            $('.leaflet-container').css('cursor', '');
+          });
+        }
       }).addTo(map);
+      // fit the map to the incoming data
+      map.fitBounds(markers.getBounds());
+      // initially, add all markers to the selectedLayers layer group
+      selectedLayers.addLayer(markers);
+      // upon a dropdown menu submission...
+      $('#chapter-select')[0].onchange = function(e) {
+        // call the filterMarkers function on the markers
+        filterMarkers(markers);
+      };
     }; // end drawMap function
+
+    // define the filterMarkers function
+    function filterMarkers(markers) {
+      // empty the chapterContent array
+      chapterContent.length = 0;
+      // clear the content-info div
+      info.innerHTML = chapterContent.join("");
+      // empty the chapterSelected array
+      chapterSelected.length = 0;
+      // empty the layer group
+      selectedLayers.clearLayers();
+      // push the selected chapter to the empty chapterSelected array
+      chapterSelected.push($('#chapter-select')[0].value);
+      // iterate through each marker
+      markers.eachLayer(function(layer) {
+        // define the marker properties
+        const props = layer.feature.properties;
+        // define the image content
+        let siteImage = props.image_url;
+        siteImage = siteImage || undefined;
+        if (siteImage != undefined) {
+          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
+        } else {
+          var imgContent = "";
+        };
+        // check if the selected chapter matches the marker category
+        if (chapterSelected[0] == props.chapter) {
+          // and add it to the map in case of a match
+          selectedLayers.addLayer(layer);
+          // push content to the chapterContent array
+          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+          // redefine the div
+          //info.innerHTML = chapterContent.join("<hr>");
+        } else if (chapterSelected[0] == 0) {
+          // or add all if "All" is selected
+          selectedLayers.addLayer(layer);
+          // push content to the chapterContent array
+          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+          // redefine the div
+          //info.innerHTML = chapterContent.join("<hr>");
+        } else {
+          // or remove it from the map if there is no match
+          selectedLayers.removeLayer(layer);
+        }
+      });
+      // define some spacing for the end of the scroll bar
+      const scrollEndHeight = 300;
+      // add a final div to the story map scroll bar
+      chapterContent.push(
+        "<div><br><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/story-map-template'>story-map-template</a>.</h3><p style='padding-bottom:" +
+        scrollEndHeight + "px'></p></div>");
+      // redefine the div
+      info.innerHTML = chapterContent.join("<hr>");
+      // identify the lat,lng of the first story div in the sidebar
+      const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
+      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
+      // define the desired zoom setting when going to a point of interest
+      const firstStoryZoom = 14;
+      // zoom to the marker connected to the story div
+      map.setView([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+      // iterate through each marker
+      markers.eachLayer(function(layer) {
+        // define the coordinates of each marker
+        const markerCoords = layer.feature.geometry.coordinates;
+        // if the first story coordinates match the marker coordinates...
+        // IF TWO ENTRIES HAVE THE SAME LOCATION MAKE SURE THE COORDINATES OF ONE ARE ONE DIGIT OFF
+        if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {
+          // fire a click on the marker, opening the popup
+          layer.fire('click');
+          layer.setZIndexOffset(1000);
+          map.setView([layer.getLatLng().lat, layer.getLatLng().lng], 14);
+        } else {
+          layer.setZIndexOffset(0);
+        }
+      });
+    }; // end of filter markers function
 
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
@@ -356,9 +498,15 @@
                           'body {padding: 0;margin: 0;}' +
                           'html,body,#map {height: 100%;font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;}' +
                           'i {color: white;}' +
+                          '.leaflet-popup-content-wrapper {line-height: 10px;border-radius: 2px;height: 10 px;max-height: 300px;max-width: 350px;overflow: auto;}' +
+                          '.leaflet-popup {position: absolute;text-align: center;}' +
+                          '.leaflet-popup-content {min-width: 100 px !important;}' +
+                          '.resize {width: 300px;height: auto;}' +
                           'p {font-size: 12px;}' +
                           'h2 {font-size: 13px;margin-bottom: 0px;margin-top: 0px;}' +
                           'h3 {font-size: 12px;font-weight: normal;margin-bottom: 0px;margin-top: 0px;}' +
+                          '.br {display: block;margin-bottom: 0em;}' +
+                          '.brmedium {display: block;margin-bottom: 1em;}' +
                           '@media (max-width: 1000px) {' +
                             '.sidebar-header {font-size: 15px;}' +
                             'p {font-size: 11px;}' +
@@ -383,7 +531,7 @@
                                 '<br>' +
                                 '<b><h2>About This Project</h2></b>' +
                                 '<span class="br"></span>' +
-                                '<h3>This map was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry.</h3>' +
+                                '<h3>This map was created using <a href="https://github.com/jebowe3/CSV-2-Storymap" target="_blank">CSV-2-Storymap</a>, which takes a user input csv file and generates thematically coded markers for each entry based on the "chapter" attribute in the spreadsheet. These values are then fed to the dropdown menu allowing for user filtration of the scrolling sidebar content.</h3>' +
                                 '<p style="padding-bottom:0px"></p>' +
                               '</div>' +
                               '<div id="dropdown-instructions">' +
@@ -455,7 +603,65 @@
                                 '})' +
                               '});' +
                             '},' +
+                            'onEachFeature: function(feature, layer) {' +
+                              'const props = feature.properties;' +
+                              'layer.bindPopup(\'<b><h2>\'' + '+ props.name +' + '"</h2></b><span class=\'br\'></span><h3>"' + '+ props.chapter +' + '\'<hr>\' + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>"' + '+ props.description +' + '"</h3>");'  +
+                              "layer.on('mouseover', function() {" +
+                                "$('.leaflet-container').css('cursor', 'pointer');" +
+                              '});' +
+                              "layer.on('mouseout', function() {" +
+                                "$('.leaflet-container').css('cursor', '');" +
+                              '});' +
+                            '}' +
                           '}).addTo(map);' +
+                          'map.fitBounds(markers.getBounds());' +
+                          'selectedLayers.addLayer(markers);' +
+                          "$('#chapter-select')[0].onchange = function(e) {" +
+                            'filterMarkers(markers);' +
+                          '};' +
+                          'function filterMarkers(markers) {' +
+                            'chapterContent.length = 0;' +
+                            'info.innerHTML = chapterContent.join("");' +
+                            'chapterSelected.length = 0;' +
+                            'selectedLayers.clearLayers();' +
+                            'chapterSelected.push($("#chapter-select")[0].value);' +
+                            'markers.eachLayer(function(layer) {' +
+                              'const props = layer.feature.properties;' +
+                              'let siteImage = props.image_url;' +
+                              'siteImage = siteImage || undefined;' +
+                              'if (siteImage != undefined) {' +
+                                "var imgContent =" + '"<span class=' + "'brmedium'></span><img class=" + "'resize' src='\"" + ' + props.image_url + ' + '\"\'\" + ' + '"/>";' +
+                              '} else {' +
+                                'var imgContent = "";' +
+                              '};' +
+                              'if (chapterSelected[0] == props.chapter) {' +
+                                'selectedLayers.addLayer(layer);' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + \"</div>\");' +
+                              '} else if (chapterSelected[0] == 0) {' +
+                                'selectedLayers.addLayer(layer);' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + \"</div>\");' +
+                              '} else {' +
+                                'selectedLayers.removeLayer(layer);' +
+                              '}' +
+                            '});' +
+                            'const scrollEndHeight = 300;' +
+                            'chapterContent.push(\"<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/story-map-template\'>story-map-template</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
+                            'info.innerHTML = chapterContent.join("<hr>");' +
+                            'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
+                            'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
+                            'const firstStoryZoom = 14;' +
+                            'map.setView([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
+                            'markers.eachLayer(function(layer) {' +
+                              'const markerCoords = layer.feature.geometry.coordinates;' +
+                              'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
+                                'layer.fire(\'click\');' +
+                                'layer.setZIndexOffset(1000);' +
+                                'map.setView([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
+                              '} else {' +
+                                'layer.setZIndexOffset(0);' +
+                              '}' +
+                            '});' +
+                          '};' +
                         '<\/script>' +
                       '<\/body>' +
                     '</html>';
