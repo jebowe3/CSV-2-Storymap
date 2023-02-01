@@ -748,6 +748,34 @@
                           '}).addTo(map);' +
                           'map.fitBounds(markers.getBounds());' +
                           'selectedLayers.addLayer(markers);' +
+                          'markers.eachLayer(function(layer) {' +
+                            'const props = layer.feature.properties;' +
+                            'let siteImage = props.image_url;' +
+                            'siteImage = siteImage || undefined;' +
+                            'if (siteImage != undefined) {' +
+                              'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/>";' +
+                            '} else {' +
+                              'var imgContent = "";' +
+                            '};' +
+                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><br><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");' +
+                          '});' +
+                          'const scrollEndHeight = 300;' +
+                          'chapterContent.push("<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
+                          'info.innerHTML = chapterContent.join("<hr>");' +
+                          'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
+                          'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
+                          'const firstStoryZoom = 14;' +
+                          'map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
+                          'markers.eachLayer(function(layer) {' +
+                            'const markerCoords = layer.feature.geometry.coordinates;' +
+                            'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
+                              'layer.fire(\'click\');' +
+                              'layer.setZIndexOffset(1000);' +
+                              'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
+                            '} else {' +
+                              'layer.setZIndexOffset(0);' +
+                            '}' +
+                          '});' +  
                           "$('#chapter-select')[0].onchange = function(e) {" +
                             'filterMarkers(markers);' +
                           '};' +
