@@ -400,8 +400,7 @@
       // initially, add all markers to the selectedLayers layer group
       selectedLayers.addLayer(markers);
 
-
-//TESTING
+      // INITIALLY, ADD ALL DESCRIPTIONS FROM ALL ENTRIES TO THE SIDEBAR
       // iterate through each marker
       markers.eachLayer(function(layer) {
         // define the marker properties
@@ -448,7 +447,7 @@
           layer.setZIndexOffset(0);
         }
       });
-//TESTING
+      // END ADDING ALL DESCRIPTIONS FROM ALL ENTRIES TO THE SIDEBAR
 
       // upon a dropdown menu submission...
       $('#chapter-select')[0].onchange = function(e) {
@@ -775,7 +774,7 @@
                             '} else {' +
                               'layer.setZIndexOffset(0);' +
                             '}' +
-                          '});' +  
+                          '});' +
                           "$('#chapter-select')[0].onchange = function(e) {" +
                             'filterMarkers(markers);' +
                           '};' +
