@@ -405,17 +405,14 @@
       markers.eachLayer(function(layer) {
         // define the marker properties
         const props = layer.feature.properties;
-        // define the image content
-        let siteImage = props.image_url;
-        siteImage = siteImage || undefined;
-        if (siteImage != undefined) {
-          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
-        } else {
-          var imgContent = "";
-        };
+        // call the getImg function
+        var imgContent = getImg(layer, props);
+        // call the getVid function
+        var vidContent = getVid(layer, props);
         // push content to the chapterContent array
         chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-          "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+          "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
+
       });
       // define some spacing for the end of the scroll bar
       const scrollEndHeight = 300;
@@ -476,21 +473,17 @@
       markers.eachLayer(function(layer) {
         // define the marker properties
         const props = layer.feature.properties;
-        // define the image content
-        let siteImage = props.image_url;
-        siteImage = siteImage || undefined;
-        if (siteImage != undefined) {
-          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
-        } else {
-          var imgContent = "";
-        };
+        // call the getImg function
+        var imgContent = getImg(layer, props);
+        // call the getVid function
+        var vidContent = getVid(layer, props);
         // check if the selected chapter matches the marker category
         if (chapterSelected[0] == props.chapter) {
           // and add it to the map in case of a match
           selectedLayers.addLayer(layer);
           // push content to the chapterContent array
           chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
           // redefine the div
           //info.innerHTML = chapterContent.join("<hr>");
         } else if (chapterSelected[0] == 0) {
@@ -498,7 +491,7 @@
           selectedLayers.addLayer(layer);
           // push content to the chapterContent array
           chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
           // redefine the div
           //info.innerHTML = chapterContent.join("<hr>");
         } else {
@@ -613,7 +606,45 @@
           });
         }, 200); // set the timeout period
       });
-    };
+    }; // end of scrollOpenPopup() function
+
+    // define the getImg function
+    function getImg(layer, props) {
+      // define the image content
+      let siteImage = props.image_url;
+      siteImage = siteImage || undefined;
+      if (siteImage != undefined) {
+        var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
+      } else {
+        var imgContent = "";
+      };
+      return imgContent;
+    }; // end of getImg function
+
+    // define getVid function
+    function getVid(layer, props) {
+      // define the video content
+      let siteVideo = props.video_url;
+      // define regExp and...
+      let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      // use it to break apart a youtube url into a list of significant fragments
+      let match = siteVideo.match(regExp);
+      // check if the video url is present
+      if (siteVideo != "") {
+        // further check if the video is from youtube
+        if (match && match[2].length == 11) {
+          // if so define vidContent as follows
+          var vidContent = "<span class='brmedium'></span><iframe class='resize' src='" + 'https://www.youtube.com/embed/' + match[2] + '?autoplay=0' + "'>" + "</iframe>";
+        } else {
+          // if not define vidContent as follows
+          var vidContent = "<span class='brmedium'></span><video class='resize' controls>" + "<source src='" + siteVideo + "' type='video/mp4'>" + "</video>";
+        }
+      } else {
+        // if the video url is not present...
+        var vidContent = "";
+      };
+      return vidContent;
+    }; // end getVid function
 
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
@@ -749,14 +780,9 @@
                           'selectedLayers.addLayer(markers);' +
                           'markers.eachLayer(function(layer) {' +
                             'const props = layer.feature.properties;' +
-                            'let siteImage = props.image_url;' +
-                            'siteImage = siteImage || undefined;' +
-                            'if (siteImage != undefined) {' +
-                              'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/>";' +
-                            '} else {' +
-                              'var imgContent = "";' +
-                            '};' +
-                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><br><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");' +
+                            'var imgContent = getImg(layer, props);' +
+                            'var vidContent = getVid(layer, props);' +
+                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><br><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");' +
                           '});' +
                           'const scrollEndHeight = 300;' +
                           'chapterContent.push("<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
@@ -788,19 +814,14 @@
                             'chapterSelected.push($("#chapter-select")[0].value);' +
                             'markers.eachLayer(function(layer) {' +
                               'const props = layer.feature.properties;' +
-                              'let siteImage = props.image_url;' +
-                              'siteImage = siteImage || undefined;' +
-                              'if (siteImage != undefined) {' +
-                                "var imgContent =" + '"<span class=' + "'brmedium'></span><img class=" + "'resize' src='\"" + ' + props.image_url + ' + '\"\'\" + ' + '"/>";' +
-                              '} else {' +
-                                'var imgContent = "";' +
-                              '};' +
+                              'var imgContent = getImg(layer, props);' +
+                              'var vidContent = getVid(layer, props);' +
                               'if (chapterSelected[0] == props.chapter) {' +
                                 'selectedLayers.addLayer(layer);' +
-                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + \"</div>\");' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"</div>\");' +
                               '} else if (chapterSelected[0] == 0) {' +
                                 'selectedLayers.addLayer(layer);' +
-                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + \"</div>\");' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"</div>\");' +
                               '} else {' +
                                 'selectedLayers.removeLayer(layer);' +
                               '}' +
@@ -870,6 +891,31 @@
                                 '});' +
                               '}, 200);' +
                             '});' +
+                          '};' +
+                          'function getImg(layer, props) {' +
+                            'let siteImage = props.image_url;' +
+                            'siteImage = siteImage || undefined;' +
+                            'if (siteImage != undefined) {' +
+                              'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/>";' +
+                            '} else {' +
+                              'var imgContent = "";' +
+                            '};' +
+                            'return imgContent;' +
+                          '};' +
+                          'function getVid(layer, props) {' +
+                            'let siteVideo = props.video_url;' +
+                            'let regExp = /^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=)([^#\\&\\?]*).*/;' +
+                            'let match = siteVideo.match(regExp);' +
+                            'if (siteVideo != "") {' +
+                              'if (match && match[2].length == 11) {' +
+                                'var vidContent = "<span class=\'brmedium\'></span><iframe class=\'resize\' src=\'" + \'https://www.youtube.com/embed/\' + match[2] + \'?autoplay=0\' + "\'>" + "</iframe>";' +
+                              '} else {' +
+                                'var vidContent = "<span class=\'brmedium\'></span><video class=\'resize\' controls>" + "<source src=\'" + siteVideo + "\' type=\'video/mp4\'>" + "</video>";' +
+                              '}' +
+                            '} else {' +
+                              'var vidContent = "";' +
+                            '};' +
+                            'return vidContent;' +
                           '};' +
                         '<\/script>' +
                       '<\/body>' +
