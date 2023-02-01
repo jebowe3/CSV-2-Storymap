@@ -399,6 +399,57 @@
       map.fitBounds(markers.getBounds());
       // initially, add all markers to the selectedLayers layer group
       selectedLayers.addLayer(markers);
+
+
+//TESTING
+      // iterate through each marker
+      markers.eachLayer(function(layer) {
+        // define the marker properties
+        const props = layer.feature.properties;
+        // define the image content
+        let siteImage = props.image_url;
+        siteImage = siteImage || undefined;
+        if (siteImage != undefined) {
+          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
+        } else {
+          var imgContent = "";
+        };
+        // push content to the chapterContent array
+        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+          "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + "</div>");
+      });
+      // define some spacing for the end of the scroll bar
+      const scrollEndHeight = 300;
+      // add a final div to the story map scroll bar
+      chapterContent.push(
+        "<div><br><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
+        scrollEndHeight + "px'></p></div>");
+      // redefine the div
+      info.innerHTML = chapterContent.join("<hr>");
+      // identify the lat,lng of the first story div in the sidebar
+      const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
+      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
+      // define the desired zoom setting when going to a point of interest
+      const firstStoryZoom = 14;
+      // zoom to the marker connected to the story div
+      map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+      // iterate through each marker
+      markers.eachLayer(function(layer) {
+        // define the coordinates of each marker
+        const markerCoords = layer.feature.geometry.coordinates;
+        // if the first story coordinates match the marker coordinates...
+        // IF TWO ENTRIES HAVE THE SAME LOCATION MAKE SURE THE COORDINATES OF ONE ARE ONE DIGIT OFF
+        if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {
+          // fire a click on the marker, opening the popup
+          layer.fire('click');
+          layer.setZIndexOffset(1000);
+          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);
+        } else {
+          layer.setZIndexOffset(0);
+        }
+      });
+//TESTING
+
       // upon a dropdown menu submission...
       $('#chapter-select')[0].onchange = function(e) {
         // call the filterMarkers function on the markers
@@ -728,7 +779,7 @@
                               '}' +
                             '});' +
                             'const scrollEndHeight = 300;' +
-                            'chapterContent.push(\"<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
+                            'chapterContent.push(\"<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
                             'info.innerHTML = chapterContent.join("<hr>");' +
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                             'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
