@@ -162,6 +162,7 @@
         <form id="map_parameters" name="map_parameters" action="#" accept-charset="utf-8" class="inlineForm">
           <select id="chapter-select" class="div-toggle" data-target=".my-info-1"></select>
         </form>
+        <span class='brmedium'></span>
         <div id="sidebar-info" class="my-info-1">
           <div id="content-info" class="contentinfo hide">
             <p class="lorem">Apply some filters to see descriptive content.</p>
@@ -410,18 +411,18 @@
         // call the getVid function
         var vidContent = getVid(layer, props);
         // push content to the chapterContent array
-        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-          "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
+        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+          "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "<span class='brmedium'></span></div>");
 
       });
       // define some spacing for the end of the scroll bar
-      const scrollEndHeight = 300;
+      const scrollEndHeight = 100;
       // add a final div to the story map scroll bar
       chapterContent.push(
-        "<div><br><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
+        "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
         scrollEndHeight + "px'></p></div>");
       // redefine the div
-      info.innerHTML = chapterContent.join("<hr>");
+      info.innerHTML = chapterContent.join("<span class='br'></span>");
       // identify the lat,lng of the first story div in the sidebar
       const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
       const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
@@ -482,16 +483,16 @@
           // and add it to the map in case of a match
           selectedLayers.addLayer(layer);
           // push content to the chapterContent array
-          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
+          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "<span class='brmedium'></span></div>");
           // redefine the div
           //info.innerHTML = chapterContent.join("<hr>");
         } else if (chapterSelected[0] == 0) {
           // or add all if "All" is selected
           selectedLayers.addLayer(layer);
           // push content to the chapterContent array
-          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><br><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
-            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");
+          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+            "</h3><span class='brmedium'></span><b><h2>Description:</h2></b><span class='br'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "<span class='brmedium'></span></div>");
           // redefine the div
           //info.innerHTML = chapterContent.join("<hr>");
         } else {
@@ -500,13 +501,13 @@
         }
       });
       // define some spacing for the end of the scroll bar
-      const scrollEndHeight = 300;
+      const scrollEndHeight = 100;
       // add a final div to the story map scroll bar
       chapterContent.push(
-        "<div><br><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
+        "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
         scrollEndHeight + "px'></p></div>");
       // redefine the div
-      info.innerHTML = chapterContent.join("<hr>");
+      info.innerHTML = chapterContent.join("<span class='br'></span>");
       // identify the lat,lng of the first story div in the sidebar
       const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
       const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
@@ -555,7 +556,7 @@
            // if the start and end of the div crosses the middle of the sidebar...
            if (divStart < midLine && divEnd > midLine) {
              // highlight the target div on scroll with an off-white shade
-             $(this)[0].style.backgroundColor = "#F5F5F5";
+             $(this)[0].style.backgroundColor = "#EFEEEC";
              // narrow down the points array to the last two points in the list
              points.splice(0, points.length - 1);
              // define a story div point
@@ -707,6 +708,7 @@
                               '<form id="map_parameters" name="map_parameters" action="#" accept-charset="utf-8" class="inlineForm">' +
                                 '<select id="chapter-select" class="div-toggle" data-target=".my-info-1"></select>' +
                               '</form>' +
+                              '<span class=\'brmedium\'></span>' +
                               '<div id="sidebar-info" class="my-info-1">' +
                                 '<div id="content-info" class="contentinfo hide">' +
                                   '<p class="lorem">Apply some filters to see descriptive content.</p>' +
@@ -787,11 +789,11 @@
                             'const props = layer.feature.properties;' +
                             'var imgContent = getImg(layer, props);' +
                             'var vidContent = getVid(layer, props);' +
-                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><br><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "</div>");' +
+                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + "<span class=\'brmedium\'></span></div>");' +
                           '});' +
-                          'const scrollEndHeight = 300;' +
-                          'chapterContent.push("<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
-                          'info.innerHTML = chapterContent.join("<hr>");' +
+                          'const scrollEndHeight = 100;' +
+                          'chapterContent.push("<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
+                          'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                           'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                           'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
                           'const firstStoryZoom = 14;' +
@@ -823,17 +825,17 @@
                               'var vidContent = getVid(layer, props);' +
                               'if (chapterSelected[0] == props.chapter) {' +
                                 'selectedLayers.addLayer(layer);' +
-                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"</div>\");' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"<span class=\'brmedium\'></span></div>\");' +
                               '} else if (chapterSelected[0] == 0) {' +
                                 'selectedLayers.addLayer(layer);' +
-                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><br><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"</div>\");' +
+                                'chapterContent.push(' + '"<div class=' + "'story' " + "data-point='" + '"' + ' + props.Y + "," + props.X + ' + ' \"\'><b><h2>\" + props.name + \"</h2></b><span class=\'br\'></span><h3>\" + props.chapter + \"<span class=\'br\'></span>\" + \"</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>\"  + props.description + \"</h3>\" + imgContent + vidContent + \"<span class=\'brmedium\'></span></div>\");' +
                               '} else {' +
                                 'selectedLayers.removeLayer(layer);' +
                               '}' +
                             '});' +
-                            'const scrollEndHeight = 300;' +
-                            'chapterContent.push(\"<div><br><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
-                            'info.innerHTML = chapterContent.join("<hr>");' +
+                            'const scrollEndHeight = 100;' +
+                            'chapterContent.push(\"<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
+                            'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                             'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
                             'const firstStoryZoom = 14;' +
@@ -861,7 +863,7 @@
                                 'const lng = $(this)[0].getAttribute(\'data-point\').split(\',\')[1];' +
                                 'const zoom = 14;' +
                                 'if (divStart < midLine && divEnd > midLine) {' +
-                                  '$(this)[0].style.backgroundColor = "#F5F5F5";' +
+                                  '$(this)[0].style.backgroundColor = "#EFEEEC";' +
                                   'points.splice(0, points.length - 1);' +
                                   'const point = $(this)[0].getAttribute(\'data-point\');' +
                                   'points.push(point);' +
