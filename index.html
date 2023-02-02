@@ -554,6 +554,8 @@
            const zoom = 14;
            // if the start and end of the div crosses the middle of the sidebar...
            if (divStart < midLine && divEnd > midLine) {
+             // highlight the target div on scroll with an off-white shade
+             $(this)[0].style.backgroundColor = "#F5F5F5";
              // narrow down the points array to the last two points in the list
              points.splice(0, points.length - 1);
              // define a story div point
@@ -570,6 +572,9 @@
              } // this condition prevents jarring associated with scrolling by waiting for a point change to reset the map view
              // push the story coordinates to the scrollCoords array
              scrollCoords.push(lng, lat);
+           } else {
+             // reset the div's background color to white
+             $(this)[0].style.backgroundColor = "white";
            }
            // upon a change in the window size...
            window.addEventListener('resize', function() {
@@ -856,6 +861,7 @@
                                 'const lng = $(this)[0].getAttribute(\'data-point\').split(\',\')[1];' +
                                 'const zoom = 14;' +
                                 'if (divStart < midLine && divEnd > midLine) {' +
+                                  '$(this)[0].style.backgroundColor = "#F5F5F5";' +
                                   'points.splice(0, points.length - 1);' +
                                   'const point = $(this)[0].getAttribute(\'data-point\');' +
                                   'points.push(point);' +
@@ -866,6 +872,8 @@
                                     '}, 200);' +
                                   '}' +
                                   'scrollCoords.push(lng, lat);' +
+                                '} else {' +
+                                  '$(this)[0].style.backgroundColor = "white";' +
                                 '}' +
                                 'window.addEventListener(\'resize\', function() {' +
                                   'if (divStart < midLine && divEnd > midLine) {' +
