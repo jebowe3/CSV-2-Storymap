@@ -620,9 +620,16 @@
     function getImg(layer, props) {
       // define the image content
       let siteImage = props.image_url;
+      // define the image description
+      let imgDesc = props.image_description;
       siteImage = siteImage || undefined;
       if (siteImage != undefined) {
-        var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
+        // check if there is an image description
+        if (imgDesc != "") {
+          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/><span class='brmedium'></span><h3>" + props.image_description + "</h3>";
+        } else {
+          var imgContent = "<span class='brmedium'></span><img class='resize' src='" + props.image_url + "'" + "/>";
+        }
       } else {
         var imgContent = "";
       };
@@ -633,19 +640,33 @@
     function getVid(layer, props) {
       // define the video content
       let siteVideo = props.video_url;
+      // define the video description
+      let vidDesc = props.video_description;
       // define regExp and...
       let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       // use it to break apart a youtube url into a list of significant fragments
       let match = siteVideo.match(regExp);
       // check if the video url is present
       if (siteVideo != "") {
-        // further check if the video is from youtube
-        if (match && match[2].length == 11) {
-          // if so define vidContent as follows
-          var vidContent = "<span class='brmedium'></span><iframe class='resize' src='" + 'https://www.youtube.com/embed/' + match[2] + '?autoplay=0' + "'>" + "</iframe>";
+        // check if there is a video description
+        if (vidDesc != "") {
+          // further check if the video is from youtube
+          if (match && match[2].length == 11) {
+            // if so define vidContent as follows
+            var vidContent = "<span class='brmedium'></span><iframe class='resize' src='" + 'https://www.youtube.com/embed/' + match[2] + '?autoplay=0' + "'>" + "</iframe><span class='brmedium'></span><h3>" + props.video_description + "</h3>";
+          } else {
+            // if not define vidContent as follows
+            var vidContent = "<span class='brmedium'></span><video class='resize' controls>" + "<source src='" + siteVideo + "' type='video/mp4'>" + "</video><span class='brmedium'></span><h3>" + props.video_description + "</h3>";
+          }
         } else {
-          // if not define vidContent as follows
-          var vidContent = "<span class='brmedium'></span><video class='resize' controls>" + "<source src='" + siteVideo + "' type='video/mp4'>" + "</video>";
+          // further check if the video is from youtube
+          if (match && match[2].length == 11) {
+            // if so define vidContent as follows
+            var vidContent = "<span class='brmedium'></span><iframe class='resize' src='" + 'https://www.youtube.com/embed/' + match[2] + '?autoplay=0' + "'>" + "</iframe>";
+          } else {
+            // if not define vidContent as follows
+            var vidContent = "<span class='brmedium'></span><video class='resize' controls>" + "<source src='" + siteVideo + "' type='video/mp4'>" + "</video>";
+          }
         }
       } else {
         // if the video url is not present...
@@ -904,9 +925,14 @@
                           '};' +
                           'function getImg(layer, props) {' +
                             'let siteImage = props.image_url;' +
+                            'let imgDesc = props.image_description;' +
                             'siteImage = siteImage || undefined;' +
                             'if (siteImage != undefined) {' +
-                              'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/>";' +
+                              'if (imgDesc != "") {' +
+                                'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/><span class=\'brmedium\'></span><h3>" + props.image_description + "</h3>";' +
+                              '} else {' +
+                                'var imgContent = "<span class=\'brmedium\'></span><img class=\'resize\' src=\'" + props.image_url + "\'" + "/>";' +
+                              '}' +
                             '} else {' +
                               'var imgContent = "";' +
                             '};' +
@@ -914,13 +940,22 @@
                           '};' +
                           'function getVid(layer, props) {' +
                             'let siteVideo = props.video_url;' +
+                            'let vidDesc = props.video_description;' +
                             'let regExp = /^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=)([^#\\&\\?]*).*/;' +
                             'let match = siteVideo.match(regExp);' +
                             'if (siteVideo != "") {' +
-                              'if (match && match[2].length == 11) {' +
-                                'var vidContent = "<span class=\'brmedium\'></span><iframe class=\'resize\' src=\'" + \'https://www.youtube.com/embed/\' + match[2] + \'?autoplay=0\' + "\'>" + "</iframe>";' +
+                              'if (vidDesc != "") {' +
+                                'if (match && match[2].length == 11) {' +
+                                  'var vidContent = "<span class=\'brmedium\'></span><iframe class=\'resize\' src=\'" + \'https://www.youtube.com/embed/\' + match[2] + \'?autoplay=0\' + "\'>" + "</iframe><span class=\'brmedium\'></span><h3>" + props.video_description + "</h3>";' +
+                                '} else {' +
+                                  'var vidContent = "<span class=\'brmedium\'></span><video class=\'resize\' controls>" + "<source src=\'" + siteVideo + "\' type=\'video/mp4\'>" + "</video><span class=\'brmedium\'></span><h3>" + props.video_description + "</h3>";' +
+                                '}' +
                               '} else {' +
-                                'var vidContent = "<span class=\'brmedium\'></span><video class=\'resize\' controls>" + "<source src=\'" + siteVideo + "\' type=\'video/mp4\'>" + "</video>";' +
+                                'if (match && match[2].length == 11) {' +
+                                  'var vidContent = "<span class=\'brmedium\'></span><iframe class=\'resize\' src=\'" + \'https://www.youtube.com/embed/\' + match[2] + \'?autoplay=0\' + "\'>" + "</iframe>";' +
+                                '} else {' +
+                                  'var vidContent = "<span class=\'brmedium\'></span><video class=\'resize\' controls>" + "<source src=\'" + siteVideo + "\' type=\'video/mp4\'>" + "</video>";' +
+                                '}' +
                               '}' +
                             '} else {' +
                               'var vidContent = "";' +
