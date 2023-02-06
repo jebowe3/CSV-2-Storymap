@@ -38,3 +38,35 @@ Once complete, your spreadsheet will look something like the following image, bu
 
 ![Completed Spreadsheet](images/spreadsheet.png)
 **Figure 03**. A Sample Completed Spreadsheet.
+
+## 2. Choose a Title and Upload CSV
+Click on [this link](https://jebowe3.github.io/CSV-2-Storymap/) to open the application. You should see the following.
+
+![Initial Form](images/launch.png)
+**Figure 04**. Initial Submission Form.
+
+In the first submission text box, you can provide a name for your map. In this case, I will call the map "Iowa's Largest Cities" and then click the "enter" key or the "Submit" button to change the title. You should notice that both the title bar and the page name in the tab bar have changed.
+
+![Change Title](images/title.png)
+**Figure 05**. Changing the Map Title
+
+Now, if your spreadsheet is in csv format and completed with the required data, you can click the "Browse" button to search for and input your spreadsheet. Follow along as shown below.
+
+![Input Data](images/input.png)
+**Figure 06**. Input CSV Data
+
+Once completed, your map should fill with markers in the appropriate locations and the respective data should populate the sidebar. Try scrolling and filtering this data in the sidebar to see the effect on the map window.
+
+![Result](images/result.png)
+**Figure 07**. The Resulting Map
+
+## 3. Data Portability
+If you want to self-host or customize the resulting map, you can download the code for your map in an "index.html" file. Scroll to the bottom of the sidebar on the left side of the screen and click on the "Download" button as shown below.
+
+![Result](images/download.png)
+**Figure 08**. Download the Code
+
+Check your computer's download folder. All of the required code is inside this file.
+
+![Result](images/code.png)
+**Figure 09**. The Resulting Code
