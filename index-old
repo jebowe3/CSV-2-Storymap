@@ -192,8 +192,7 @@
     // instantiate and define a Leaflet map
     const map = L.map('map', {
       center: [0, -70], // give map initial coordinates
-      zoom: 2, // set initial zoom level
-      zoomControl: false
+      zoom: 2 // set initial zoom level
     });
     // add CartoDB Voyager map tile service to the map
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -205,29 +204,13 @@
     L.control.scale({
       position: 'bottomright'
     }).addTo(map);
-    // Add the zoom control to the top right corner
-    L.control.zoom({
-      position: 'topright'
-    }).addTo(map);
 
     // define and add the sidebar to the map (we may want to swap for sidebar-v2: https://github.com/Turbo87/sidebar-v2)
     const sidebar = L.control.sidebar('sidebar').addTo(map);
 
     // show sidebar content on map load
     sidebar.open('home');
-/*
-    sidebar.on('closing', function() {
-      document.getElementById('map').style.width = "100%";
-    });
 
-    sidebar.on('opening', function() {
-      const sidebarPerc = (sidebar._container.scrollWidth + 54)/window.innerWidth;
-      const mapPerc = 1 - sidebarPerc;
-
-      document.getElementById('map').style.width = (window.innerWidth * mapPerc) + "px";
-      document.getElementById('map').style.float = "right";
-    });
-*/
     const input = document.getElementById("map-name");
 
     // Execute a function when the user presses a key on the keyboard
@@ -241,6 +224,8 @@
       }
     });
 
+
+// CHECK IF ALL OF THIS IS STILL NEEDED
     // define an empty array to hold sidebar content
     const chapterContent = [];
     // define an empty array to hold the selected chapter
@@ -257,80 +242,28 @@
     const chapterNames = [];
     // define an empty array to hold the offset for the new map center
     const centerDiff = [];
-
-/*
-    // the following gets the offset between the map central meridian and visible map central meridian
-    function getWinDiff() {
-      // the longitude of the right side of the map
-      const rightLng = map.getBounds().getNorthEast().lng;
-      // the longitude of the left side of the visible map
-      const leftLng = map.containerPointToLatLng([sidebar._container.scrollWidth + 54,0]).lng;
-      // get the longitudinal distance between the edges of the visible map, divide by 2, and add to the longitude of the left side to get the visible map's central meridian
-      const centerLng = leftLng + ((rightLng - leftLng) / 2);
-      // get the difference between the map's central meridian and the visible map's central meridian
-      const winDiff = centerLng - L.latLng(map.getCenter()).lng;
-      return winDiff;
-    };
-*/
-
- /*   
     // the following gets the approximate center of the visible map when the sidebar is open at zoom 14
     const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;
     const winHalf = winWidth / 2;
     const winThird = winWidth / 3;
     const winDiff = (winHalf - winThird) / 4;
+
     // push the winDiff value to the empty array
     centerDiff.push(winDiff);
-*/
-/*
-    // the following gets the central meridian of the visible map when the sidebar is open
-    // the longitude of the right side of the map
-    const rightLng = map.getBounds().getNorthEast().lng;
-    // the longitude of the left side of the visible map
-    const leftLng = map.containerPointToLatLng([sidebar._container.scrollWidth + 54,0]).lng;
-    // get the longitudinal distance between the edges of the visible map, divide by 2, and add to the longitude of the left side to get the visible map's central meridian
-    const centerLng = leftLng + ((rightLng - leftLng) / 2);
-    // get the difference between the map's central meridian and the visible map's central meridian
-    const winDiff = centerLng - L.latLng(map.getCenter()).lng;
-    // push the difference into the empty centerDiff array
-    centerDiff.push(winDiff);     
 
-    const sidebarPerc = (sidebar._container.scrollWidth + 54)/window.innerWidth;
-    const mapPerc = 1 - sidebarPerc;
-
-    document.getElementById('map').style.width = (window.innerWidth * mapPerc) + "px";
-    document.getElementById('map').style.float = "right";
-*/
     // this listens for a window resize event and gets the approximate center of the visible map at zoom 14
     window.addEventListener('resize', function() {
       // empty the centerDiff array
-      centerDiff.length = 0;  
+      centerDiff.length = 0;
       const winWidth = map.getBounds()._northEast.lng - map.getBounds()._southWest.lng;
       const winHalf = winWidth / 2;
       const winThird = winWidth / 3;
       const winDiff = (winHalf - winThird) / 4;
       // push the new winDiff value to the empty array
       centerDiff.push(winDiff);
-
-/* 
-      // the longitude of the right side of the map
-      const rightLng = map.getBounds().getNorthEast().lng;
-      // the longitude of the left side of the visible map
-      const leftLng = map.containerPointToLatLng([sidebar._container.scrollWidth + 54,0]).lng;
-      // get the longitudinal distance between the edges of the visible map, divide by 2, and add to the longitude of the left side to get the visible map's central meridian
-      const centerLng = leftLng + ((rightLng - leftLng) / 2);
-      // get the difference between the map's central meridian and the visible map's central meridian
-      const winDiff = centerLng - L.latLng(map.getCenter()).lng;
-      // push the difference into the empty centerDiff array
-      centerDiff.push(winDiff);   
-      
-      const sidebarPerc = (sidebar._container.scrollWidth + 54)/window.innerWidth;
-      const mapPerc = 1 - sidebarPerc;
-
-      document.getElementById('map').style.width = (window.innerWidth * mapPerc) + "px";
-      document.getElementById('map').style.float = "right";
-*/
     });
+// CHECK IF ALL OF ABOVE IS STILL NEEDED
+
 
     // define a function to change the map title
     function changeTitle() {
