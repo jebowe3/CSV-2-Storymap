@@ -419,7 +419,7 @@
 
       });
       // define some spacing for the end of the scroll bar
-      const scrollEndHeight = 100;
+      const scrollEndHeight = 200;
       // add a final div to the story map scroll bar
       chapterContent.push(
         "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
@@ -515,7 +515,7 @@
         }
       });
       // define some spacing for the end of the scroll bar
-      const scrollEndHeight = 100;
+      const scrollEndHeight = 200;
       // add a final div to the story map scroll bar
       chapterContent.push(
         "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
@@ -558,8 +558,11 @@
 
     // define the scrollMarkers function
     function scrollMarkers(markers) {
-      // fit the map to the incoming data
-      map.fitBounds(markers.getBounds());
+      // fit the map to the markers and...
+      map.fitBounds(markers.getBounds(), {
+        // give it the pixel distance of the right edge of the sidebar from the left side of the window as padding
+        padding: [0, sidebar._container.getBoundingClientRect().right, 0, 0] // top, right, bottom, left
+      });
       // set the scrollTimeout to null
       var scrollTimeout = null;
        // detects a scroll event in the sidebar
@@ -881,7 +884,7 @@
                             'var audioContent = getAudio(layer, props);' +
                             'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class=\'brmedium\'></span></div>");' +
                           '});' +
-                          'const scrollEndHeight = 100;' +
+                          'const scrollEndHeight = 200;' +
                           'chapterContent.push("<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
                           'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                           "$('#chapter-select')[0].onchange = function(e) {" +
@@ -911,7 +914,7 @@
                                 'selectedLayers.removeLayer(layer);' +
                               '}' +
                             '});' +
-                            'const scrollEndHeight = 100;' +
+                            'const scrollEndHeight = 200;' +
                             'chapterContent.push(\"<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
                             'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
@@ -938,7 +941,9 @@
                             '});' +
                           '};' +
                           'function scrollMarkers(markers) {' +
-                            'map.fitBounds(markers.getBounds());' +
+                            'map.fitBounds(markers.getBounds(), {' +
+                              'padding: [0, sidebar._container.getBoundingClientRect().right, 0, 0]' +
+                            '});' +
                             'var scrollTimeout = null;' +
                             '$(\'.sidebar-content\').on("scroll", function(e) {' +
                               'scrollCoords.length = 0;' +
