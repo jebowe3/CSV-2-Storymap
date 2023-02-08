@@ -246,7 +246,7 @@
     // push the winDiff value to the empty array
     centerDiff.push(winDiff);
 
-    // this listens for a window resize event and gets the approximate center of the visible map at zoom 14
+    // this listens for a window resize event and gets the approximate center of the visible map
     window.addEventListener('resize', function() {
       // empty the centerDiff array
       centerDiff.length = 0;
@@ -425,14 +425,19 @@
         "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
         scrollEndHeight + "px'></p></div>");
       // redefine the div
-      info.innerHTML = chapterContent.join("<span class='br'></span>");
+      info.innerHTML = chapterContent.join("<span class='br'></span>");     
+/* IS THIS NEEDED HERE? */
+/*      
       // identify the lat,lng of the first story div in the sidebar
       const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
       const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
+
       // define the desired zoom setting when going to a point of interest
       const firstStoryZoom = 14;
       // zoom to the marker connected to the story div
       map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+
+
       // iterate through each marker
       markers.eachLayer(function(layer) {
         // define the coordinates of each marker
@@ -447,7 +452,9 @@
         } else {
           layer.setZIndexOffset(0);
         }
-      });
+      });   
+*/      
+/* IS THIS NEEDED HERE? */
       // END ADDING ALL DESCRIPTIONS FROM ALL ENTRIES TO THE SIDEBAR
 
       // upon a dropdown menu submission...
@@ -463,6 +470,8 @@
 
     // define the filterMarkers function
     function filterMarkers(markers) {
+      // set the scrollTimeout to null
+      let scrollTimeout = null;
       // empty the chapterContent array
       chapterContent.length = 0;
       // clear the content-info div
@@ -517,9 +526,14 @@
       const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
       const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
       // define the desired zoom setting when going to a point of interest
-      const firstStoryZoom = 14;
-      // zoom to the marker connected to the story div
-      map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+      const firstStoryZoom = 14;  
+      // set the zoom to trigger the zoomend central meridian calculation
+      map.setZoom(firstStoryZoom);        
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(function() {
+        // zoom to the marker connected to the story div, making an affordance for the offset
+        map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);
+      }, 200);
       // iterate through each marker
       markers.eachLayer(function(layer) {
         // define the coordinates of each marker
@@ -535,12 +549,18 @@
           layer.setZIndexOffset(0);
         }
       });
+      // upon a change in the window size...
+      window.addEventListener('resize', function() {
+        // zoom to the marker connected to the story div, making an affordance for the offset
+        map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);
+      });
     }; // end of filter markers function
 
     // define the scrollMarkers function
     function scrollMarkers(markers) {
       // fit the map to the incoming data
       map.fitBounds(markers.getBounds());
+      // set the scrollTimeout to null
       var scrollTimeout = null;
        // detects a scroll event in the sidebar
        $('.sidebar-content').on("scroll", function(e) {
@@ -712,7 +732,6 @@
       return audioContent;
     }; // end getAudio function
 
-/* NEW STUFF BELOW */
     // the following gets the offset between the map central meridian and visible map central meridian
     function getWinDiff() {
       // the longitude of the right side of the map
@@ -725,7 +744,6 @@
       const winDiff = centerLng - L.latLng(map.getCenter()).lng;
       return winDiff;
     }; // end getWinDiff function
-/* NEW STUFF ABOVE */
 
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
@@ -866,26 +884,13 @@
                           'const scrollEndHeight = 100;' +
                           'chapterContent.push("<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
                           'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
-                          'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
-                          'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
-                          'const firstStoryZoom = 14;' +
-                          'map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
-                          'markers.eachLayer(function(layer) {' +
-                            'const markerCoords = layer.feature.geometry.coordinates;' +
-                            'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
-                              'layer.fire(\'click\');' +
-                              'layer.setZIndexOffset(1000);' +
-                              'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
-                            '} else {' +
-                              'layer.setZIndexOffset(0);' +
-                            '}' +
-                          '});' +
                           "$('#chapter-select')[0].onchange = function(e) {" +
                             'filterMarkers(markers);' +
                           '};' +
                           'scrollMarkers(markers);' +
                           'scrollOpenPopup(markers);' +
                           'function filterMarkers(markers) {' +
+                            'let scrollTimeout = null;' +
                             'chapterContent.length = 0;' +
                             'info.innerHTML = chapterContent.join("");' +
                             'chapterSelected.length = 0;' +
@@ -912,6 +917,11 @@
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                             'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
                             'const firstStoryZoom = 14;' +
+                            'map.setZoom(firstStoryZoom);' +
+                            'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                            'scrollTimeout = setTimeout(function() {' +
+                              'map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);' +
+                            '}, 200);' +
                             'map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
                             'markers.eachLayer(function(layer) {' +
                               'const markerCoords = layer.feature.geometry.coordinates;' +
@@ -922,6 +932,9 @@
                               '} else {' +
                                 'layer.setZIndexOffset(0);' +
                               '}' +
+                            '});' +
+                            'window.addEventListener(\'resize\', function() {' +
+                              'map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);' +
                             '});' +
                           '};' +
                           'function scrollMarkers(markers) {' +
