@@ -1,4 +1,4 @@
-# CSV-2-Storymap
+# CSV-2-Storymap (A Work in Progress)
 This is a web map application that turns a template csv spreadsheet into an open source downloadable story map. Each entry in your spreadsheet will be displayed as a clickable marker with popup content on the map. The map will also display descriptive content and image, video, and audio content in a sidebar, which will move to each relevant marker as you scroll. To try it out, click on the link [here](https://jebowe3.github.io/CSV-2-Storymap/).
 
 # Instructions
