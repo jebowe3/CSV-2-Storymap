@@ -559,10 +559,7 @@
     // define the scrollMarkers function
     function scrollMarkers(markers) {
       // fit the map to the markers and...
-      map.fitBounds(markers.getBounds(), {
-        // give it the pixel distance of the right edge of the sidebar from the left side of the window as padding
-        padding: [0, sidebar._container.getBoundingClientRect().right, 0, 0] // top, right, bottom, left
-      });
+      map.fitBounds(markers.getBounds());
       // set the scrollTimeout to null
       var scrollTimeout = null;
        // detects a scroll event in the sidebar
@@ -941,9 +938,7 @@
                             '});' +
                           '};' +
                           'function scrollMarkers(markers) {' +
-                            'map.fitBounds(markers.getBounds(), {' +
-                              'padding: [0, sidebar._container.getBoundingClientRect().right, 0, 0]' +
-                            '});' +
+                            'map.fitBounds(markers.getBounds());' +
                             'var scrollTimeout = null;' +
                             '$(\'.sidebar-content\').on("scroll", function(e) {' +
                               'scrollCoords.length = 0;' +
