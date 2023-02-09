@@ -390,7 +390,7 @@
       // upon a dropdown menu submission...
       $('#chapter-select')[0].onchange = function(e) {
         // call the filterMarkers function on the markers
-        filterMarkers(markers, winDiff);
+        filterMarkers(markers/*, winDiff*/);
       };
       // call the scrollMarkers function on the markers
       scrollMarkers(markers, winDiff);
@@ -483,9 +483,7 @@
     }; // end of scrollOpenPopup() function
 
     // define the filterMarkers function
-    function filterMarkers(markers, winDiff) {
-      // set the filterTimeout to null
-      let filterTimeout = null;
+    function filterMarkers(markers/*, winDiff*/) {
       // empty the chapterContent array
       chapterContent.length = 0;
       // clear the content-info div
@@ -536,34 +534,8 @@
         scrollEndHeight + "px'></p></div>");
       // redefine the div
       info.innerHTML = chapterContent.join("<span class='br'></span>");
-      // identify the lat,lng of the first story div in the sidebar
-      const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
-      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
-      if (filterTimeout) clearTimeout(filterTimeout);
-      filterTimeout = setTimeout(function() {
-        // zoom to the marker connected to the story div, making an affordance for the offset
-        map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);
-      }, 200);
-      // iterate through each marker
-      markers.eachLayer(function(layer) {
-        // define the coordinates of each marker
-        const markerCoords = layer.feature.geometry.coordinates;
-        // if the first story coordinates match the marker coordinates...
-        if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {
-          // fire a click on the marker, opening the popup
-          layer.fire('click');
-          layer.setZIndexOffset(1000);
-          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng - winDiff], markerZoom);
-        } else {
-          layer.setZIndexOffset(0);
-        }
-      });
-      // upon a change in the window size...
-      window.addEventListener('resize', function() {
-        const resizeWinDiff = getWinDiffResize();
-        // zoom to the marker connected to the story div, making an affordance for the offset
-        map.flyTo([firstStoryLat, firstStoryLng - resizeWinDiff], markerZoom);
-      });
+      // fit the map to the markers adding padding to the top left so all markers are visible with the sidebar open
+      map.fitBounds(markers.getBounds(), {paddingTopLeft: [document.getElementById('sidebar').getBoundingClientRect().right,0]});
     }; // end of filter markers function
 
     // the following gets the offset between the map central meridian and visible map central meridian
@@ -831,7 +803,7 @@
                             'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                             'const winDiff = getWinDiff();' +
                             "$('#chapter-select')[0].onchange = function(e) {" +
-                              'filterMarkers(markers, winDiff);' +
+                              'filterMarkers(markers);' +
                             '};' +
                             'scrollMarkers(markers, winDiff);' +
                             'scrollOpenPopup(markers);' +
@@ -888,8 +860,7 @@
                               '}, 200);' +
                             '});' +
                           '};' +
-                          'function filterMarkers(markers, winDiff) {' +
-                            'let filterTimeout = null;' +
+                          'function filterMarkers(markers) {' +
                             'chapterContent.length = 0;' +
                             'info.innerHTML = chapterContent.join("");' +
                             'chapterSelected.length = 0;' +
@@ -913,26 +884,7 @@
                             'const scrollEndHeight = 200;' +
                             'chapterContent.push(\"<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:\" + scrollEndHeight + \"px\'></p></div>\");' +
                             'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
-                            'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
-                            'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
-                            'if (filterTimeout) clearTimeout(filterTimeout);' +
-                            'filterTimeout = setTimeout(function() {' +
-                              'map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);' +
-                            '}, 200);' +
-                            'markers.eachLayer(function(layer) {' +
-                              'const markerCoords = layer.feature.geometry.coordinates;' +
-                              'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
-                                'layer.fire(\'click\');' +
-                                'layer.setZIndexOffset(1000);' +
-                                'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng - winDiff], markerZoom);' +
-                              '} else {' +
-                                'layer.setZIndexOffset(0);' +
-                              '}' +
-                            '});' +
-                            'window.addEventListener(\'resize\', function() {' +
-                              'const resizeWinDiff = getWinDiffResize();' +
-                              'map.flyTo([firstStoryLat, firstStoryLng - resizeWinDiff], markerZoom);' +
-                            '});' +
+                            'map.fitBounds(markers.getBounds(), {paddingTopLeft: [document.getElementById(\'sidebar\').getBoundingClientRect().right,0]});' +
                           '};' +
                           'function getWinDiff() {' +
                             'map.setZoom(markerZoom);' +
