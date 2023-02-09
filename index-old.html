@@ -189,25 +189,17 @@
   <script src="js/leaflet-sidebar.js"></script>
   <!-- custom javascript goes below -->
   <script>
-
-/* NEED TO WRITE CODE IN CASE OF TWO ENTRIES WITH THE SAME COORDINATES! */ 
-
-    // set the desired marker-level zoom here
-    const markerZoom = 14;
-    
     // instantiate and define a Leaflet map
     const map = L.map('map', {
       center: [0, -70], // give map initial coordinates
       zoom: 2 // set initial zoom level
     });
-
     // add CartoDB Voyager map tile service to the map
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
       maxZoom: 20
     }).addTo(map);
-    
     // add a scale bar to the map
     L.control.scale({
       position: 'bottomright'
@@ -217,9 +209,8 @@
     const sidebar = L.control.sidebar('sidebar').addTo(map);
 
     // show sidebar content on map load
-    sidebar.open('home');   
+    sidebar.open('home');
 
-    // define the input for the user-defined map name
     const input = document.getElementById("map-name");
 
     // Execute a function when the user presses a key on the keyboard
@@ -232,7 +223,7 @@
         document.getElementById("myBtn").click();
       }
     });
-  
+
     // define an empty array to hold sidebar content
     const chapterContent = [];
     // define an empty array to hold the selected chapter
@@ -247,6 +238,54 @@
     const points = [];
     // define an empty array to hold all chapter values
     const chapterNames = [];
+    // define an empty array to hold the offset for the new map center
+    const centerDiff = [];
+  
+    // get the difference between the map's central meridian and the visible map's central meridian
+    const winDiff = getWinDiff();
+    // push the winDiff value to the empty array
+    centerDiff.push(winDiff);
+
+    // this listens for a window resize event and gets the approximate center of the visible map
+    window.addEventListener('resize', function() {
+      // empty the centerDiff array
+      centerDiff.length = 0;
+      // get the difference between the map's central meridian and the visible map's central meridian
+      const winDiff = getWinDiff();
+      // push the winDiff value to the empty array
+      centerDiff.push(winDiff);
+    });
+
+    // this waits for the map to finish zooming to calculate an accurate offset for the central meridian
+    map.on('zoomend', function() {
+      // empty the centerDiff array
+      centerDiff.length = 0;
+      // get the difference between the map's central meridian and the visible map's central meridian
+      const winDiff = getWinDiff();
+      // push the winDiff value to the empty array
+      centerDiff.push(winDiff);
+    });
+
+    // define a function to change the map title
+    function changeTitle() {
+      // define the map name
+      const name = document.getElementById('map-name').value;
+      // add it to the sidebar header
+      $(".sidebar-content h1").html(name + '<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>');
+      // add it to the page tab
+      document.title = document.querySelector('input').value;
+      // call the closeSidebar function
+      closeSidebar();
+    }; // end changeTitle function
+
+    // define a function to close the sidebar
+    function closeSidebar() {
+      // listen for a click on the caret icon
+      document.querySelector("span.sidebar-close").addEventListener('click', (e) => {
+        // close the sidebar
+        sidebar.close('home');
+      });
+    };
 
     // on load, provide an option to add a csv file
     window.onload = function() {
@@ -293,7 +332,7 @@
         // call the _drawMap function
         drawMap(markersGeoJSON);
         // add additional sidebar contents
-        document.getElementById("download-code").style.display="block";     
+        document.getElementById("download-code").style.display="block";
         // call the downloadCode function
         downloadCode(markersGeoJSON, name);
       });
@@ -362,7 +401,7 @@
       }).addTo(map);
       // initially, add all markers to the selectedLayers layer group
       selectedLayers.addLayer(markers);
-      
+
       // INITIALLY, ADD ALL DESCRIPTIONS FROM ALL ENTRIES TO THE SIDEBAR
       // iterate through each marker
       markers.eachLayer(function(layer) {
@@ -375,116 +414,64 @@
         // call the getAudio function
         var audioContent = getAudio(layer, props);
         // push content to the chapterContent array
-        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" + "</h3><span class='brmedium'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class='brmedium'></span></div>");
+        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+          "</h3><span class='brmedium'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class='brmedium'></span></div>");
+
       });
       // define some spacing for the end of the scroll bar
       const scrollEndHeight = 200;
       // add a final div to the story map scroll bar
       chapterContent.push(
-        "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" + scrollEndHeight + "px'></p></div>");
+        "<div><b><h2>See the Code</h2></b><span class='br'></span><h3>To see the code for this map, please go to: <a href='https://github.com/jebowe3/CSV-2-Storymap'>CSV-2-Storymap</a>.</h3><p style='padding-bottom:" +
+        scrollEndHeight + "px'></p></div>");
       // redefine the div
       info.innerHTML = chapterContent.join("<span class='br'></span>");     
+/* IS THIS NEEDED HERE? */
+/*      
+      // identify the lat,lng of the first story div in the sidebar
+      const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
+      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
+
+      // define the desired zoom setting when going to a point of interest
+      const firstStoryZoom = 14;
+      // zoom to the marker connected to the story div
+      map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);
+
+
+      // iterate through each marker
+      markers.eachLayer(function(layer) {
+        // define the coordinates of each marker
+        const markerCoords = layer.feature.geometry.coordinates;
+        // if the first story coordinates match the marker coordinates...
+        // IF TWO ENTRIES HAVE THE SAME LOCATION MAKE SURE THE COORDINATES OF ONE ARE ONE DIGIT OFF
+        if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {
+          // fire a click on the marker, opening the popup
+          layer.fire('click');
+          layer.setZIndexOffset(1000);
+          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);
+        } else {
+          layer.setZIndexOffset(0);
+        }
+      });   
+*/      
+/* IS THIS NEEDED HERE? */
       // END ADDING ALL DESCRIPTIONS FROM ALL ENTRIES TO THE SIDEBAR
-      // get the difference between the map's central meridian and the visible map's central meridian at the marker zoom level
-      const winDiff = getWinDiff();  
+
       // upon a dropdown menu submission...
       $('#chapter-select')[0].onchange = function(e) {
         // call the filterMarkers function on the markers
-        filterMarkers(markers, winDiff);
+        filterMarkers(markers);
       };
       // call the scrollMarkers function on the markers
-      scrollMarkers(markers, winDiff);      
+      scrollMarkers(markers);
       // call the scrollOpenPopup function on the markers
-      scrollOpenPopup(markers);    
+      scrollOpenPopup(markers);
     }; // end drawMap function
 
-    // define the scrollMarkers function
-    function scrollMarkers(markers, winDiff) {     
-      // fit the map to the markers
-      map.fitBounds(markers.getBounds());
+    // define the filterMarkers function
+    function filterMarkers(markers) {
       // set the scrollTimeout to null
       let scrollTimeout = null;
-       // detects a scroll event in the sidebar
-       $('.sidebar-content').on("scroll", function(e) {
-         // with each scroll, empty the scrollCoords array
-         scrollCoords.length = 0;
-         // iterate through each story div in the sidebar
-         $('.story').each(function() {
-           // gets the horizontal line crossing the middle of the window
-           const midLine = $(window).height() / 2;
-           // defines the vertical start of each story div
-           const divStart = $(this).offset().top;
-           // defines the vertical end of each story div
-           const divEnd = divStart + $(this)[0].offsetHeight;
-           // defines the latitude associated with the story div
-           const lat = $(this)[0].getAttribute('data-point').split(',')[0];
-           // defines the longitude associated with the story div
-           const lng = $(this)[0].getAttribute('data-point').split(',')[1];
-           // if the start and end of the div crosses the middle of the sidebar...
-           if (divStart < midLine && divEnd > midLine) {
-             // highlight the target div on scroll with an off-white shade
-             $(this)[0].style.backgroundColor = "#EFEEEC";
-             // narrow down the points array to the last two points in the list
-             points.splice(0, points.length - 1);
-             // define a story div point
-             const point = $(this)[0].getAttribute('data-point');
-             // push the point into the points array
-             points.push(point);
-             // if the last point does not equal the point before it...
-             if (points[0] != points[1]) {            
-               if (scrollTimeout) clearTimeout(scrollTimeout);
-               scrollTimeout = setTimeout(function() {
-                // zoom to the marker connected to the story div, making an affordance for the offset
-                map.flyTo([lat, lng - winDiff], markerZoom);
-               }, 200);
-             } // this condition prevents jarring associated with scrolling by waiting for a point change to reset the map view
-             // push the story coordinates to the scrollCoords array
-             scrollCoords.push(lng, lat);
-           } else {
-             // reset the div's background color to white
-             $(this)[0].style.backgroundColor = "white";
-           }
-           // upon a change in the window size...
-           window.addEventListener('resize', function() {
-             // if the start and end of the div crosses the middle of the sidebar...
-             if (divStart < midLine && divEnd > midLine) {
-               // zoom to the marker connected to the story div             
-               map.flyTo([lat, lng - winDiff], markerZoom);              
-             }
-           });
-         });
-       });
-    }; // end of scrollMarkers() function
-
-    // define the scrollOpenPopup function
-    function scrollOpenPopup(markers) {
-      // make a function that clicks the correct marker when scrolling stops
-      let popupTimeout = null;
-      // detects a scroll event in the sidebar
-      $('.sidebar-content').on("scroll", function() {
-        if (popupTimeout) clearTimeout(popupTimeout);
-        popupTimeout = setTimeout(function() {
-          // iterate through each marker
-          markers.eachLayer(function(layer){
-            // define the coordinates of each marker
-            const markerCoords = layer.feature.geometry.coordinates;
-            // if the first story coordinates match the marker coordinates...
-            if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {
-              // fire a click on the marker, opening the popup
-              layer.fire('click');
-              layer.setZIndexOffset(1000);
-            } else {
-              layer.setZIndexOffset(0);
-            }
-          });
-        }, 200); // set the timeout period
-      });
-    }; // end of scrollOpenPopup() function  
-    
-    // define the filterMarkers function
-    function filterMarkers(markers, winDiff) {
-      // set the filterTimeout to null
-      let filterTimeout = null;
       // empty the chapterContent array
       chapterContent.length = 0;
       // clear the content-info div
@@ -537,22 +524,27 @@
       info.innerHTML = chapterContent.join("<span class='br'></span>");
       // identify the lat,lng of the first story div in the sidebar
       const firstStoryLat = $('.story')[0].getAttribute('data-point').split(',')[0];
-      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];      
-      if (filterTimeout) clearTimeout(filterTimeout);
-      filterTimeout = setTimeout(function() {
+      const firstStoryLng = $('.story')[0].getAttribute('data-point').split(',')[1];
+      // define the desired zoom setting when going to a point of interest
+      const firstStoryZoom = 14;  
+      // set the zoom to trigger the zoomend central meridian calculation
+      map.setZoom(firstStoryZoom);        
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(function() {
         // zoom to the marker connected to the story div, making an affordance for the offset
-        map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);
+        map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);
       }, 200);
       // iterate through each marker
       markers.eachLayer(function(layer) {
         // define the coordinates of each marker
         const markerCoords = layer.feature.geometry.coordinates;
         // if the first story coordinates match the marker coordinates...
+        // IF TWO ENTRIES HAVE THE SAME LOCATION MAKE SURE THE COORDINATES OF ONE ARE ONE DIGIT OFF
         if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {
           // fire a click on the marker, opening the popup
           layer.fire('click');
           layer.setZIndexOffset(1000);
-          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng - winDiff], markerZoom);
+          map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);
         } else {
           layer.setZIndexOffset(0);
         }
@@ -560,47 +552,106 @@
       // upon a change in the window size...
       window.addEventListener('resize', function() {
         // zoom to the marker connected to the story div, making an affordance for the offset
-        map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);
+        map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);
       });
     }; // end of filter markers function
 
-    // the following gets the offset between the map central meridian and visible map central meridian
-    function getWinDiff() {
-      // quickly set zoom to the marker level zoom to gather the following data
-      map.setZoom(markerZoom);
-      // the longitude of the right side of the map
-      const rightLng = map.getBounds().getNorthEast().lng;
-      // the longitude of the left side of the visible map
-      const leftLng = map.containerPointToLatLng([document.getElementById('sidebar').getBoundingClientRect().right,0]).lng;
-      // get the longitudinal distance between the edges of the visible map, divide by 2, and add to the longitude of the left side to get the visible map's central meridian
-      const centerLng = leftLng + ((rightLng - leftLng) / 2);
-      // get the difference between the map's central meridian and the visible map's central meridian
-      const winDiff = centerLng - L.latLng(map.getCenter()).lng;
-      // reset the zoom back to the initial map zoom
-      map.setZoom(2);
-      return winDiff;
-    }; // end getWinDiff function
-    
-    // define a function to change the map title
-    function changeTitle() {
-      // define the map name
-      const name = document.getElementById('map-name').value;
-      // add it to the sidebar header
-      $(".sidebar-content h1").html(name + '<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>');
-      // add it to the page tab
-      document.title = document.querySelector('input').value;
-      // call the closeSidebar function
-      closeSidebar();
-    }; // end changeTitle function
+    // define the scrollMarkers function
+    function scrollMarkers(markers) {
+      // fit the map to the markers and...
+      map.fitBounds(markers.getBounds());
+      // set the scrollTimeout to null
+      var scrollTimeout = null;
+       // detects a scroll event in the sidebar
+       $('.sidebar-content').on("scroll", function(e) {
+         // with each scroll, empty the scrollCoords array
+         scrollCoords.length = 0;
+         // iterate through each story div in the sidebar
+         $('.story').each(function() {
+           // gets the horizontal line crossing the middle of the window
+           const midLine = $(window).height() / 2;
+           // defines the vertical start of each story div
+           const divStart = $(this).offset().top;
+           // defines the vertical end of each story div
+           const divEnd = divStart + $(this)[0].offsetHeight;
+           // defines the latitude associated with the story div
+           const lat = $(this)[0].getAttribute('data-point').split(',')[0];
+           // defines the longitude associated with the story div
+           const lng = $(this)[0].getAttribute('data-point').split(',')[1];
+           // define the desired zoom setting when going to a point of interest
+           const zoom = 14;
+           // if the start and end of the div crosses the middle of the sidebar...
+           if (divStart < midLine && divEnd > midLine) {
+             // highlight the target div on scroll with an off-white shade
+             $(this)[0].style.backgroundColor = "#EFEEEC";
+             // narrow down the points array to the last two points in the list
+             points.splice(0, points.length - 1);
+             // define a story div point
+             const point = $(this)[0].getAttribute('data-point');
+             // push the point into the points array
+             points.push(point);
+             // if the last point does not equal the point before it...
+             if (points[0] != points[1]) {
+              // set the zoom to trigger the zoomend central meridian calculation
+              map.setZoom(zoom);
+/*              
+              map.on('zoomend', function() {
+                // empty the centerDiff array
+                centerDiff.length = 0;
+                // get the difference between the map's central meridian and the visible map's central meridian
+                const winDiff = getWinDiff();
+                // push the winDiff value to the empty array
+                centerDiff.push(winDiff);
+              });
+*/              
+               if (scrollTimeout) clearTimeout(scrollTimeout);
+               scrollTimeout = setTimeout(function() {
+                // zoom to the marker connected to the story div, making an affordance for the offset
+                map.flyTo([lat, lng - centerDiff[0]], zoom);
+               }, 200);
+             } // this condition prevents jarring associated with scrolling by waiting for a point change to reset the map view
+             // push the story coordinates to the scrollCoords array
+             scrollCoords.push(lng, lat);
+           } else {
+             // reset the div's background color to white
+             $(this)[0].style.backgroundColor = "white";
+           }
+           // upon a change in the window size...
+           window.addEventListener('resize', function() {
+             // if the start and end of the div crosses the middle of the sidebar...
+             if (divStart < midLine && divEnd > midLine) {
+               // zoom to the marker connected to the story div             
+               map.flyTo([lat, lng - centerDiff[0]], 14);              
+             }
+           });
+         });
+       });
+    }; // end of scrollMarkers() function
 
-    // define a function to close the sidebar
-    function closeSidebar() {
-      // listen for a click on the caret icon
-      document.querySelector("span.sidebar-close").addEventListener('click', (e) => {
-        // close the sidebar
-        sidebar.close('home');
+    // define the scrollOpenPopup function
+    function scrollOpenPopup(markers) {
+      // make a function that clicks the correct marker when scrolling stops
+      var scrollTimeout = null;
+      // detects a scroll event in the sidebar
+      $('.sidebar-content').on("scroll", function() {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function() {
+          // iterate through each marker
+          markers.eachLayer(function(layer){
+            // define the coordinates of each marker
+            const markerCoords = layer.feature.geometry.coordinates;
+            // if the first story coordinates match the marker coordinates...
+            if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {
+              // fire a click on the marker, opening the popup
+              layer.fire('click');
+              layer.setZIndexOffset(1000);
+            } else {
+              layer.setZIndexOffset(0);
+            }
+          });
+        }, 200); // set the timeout period
       });
-    }; // end closeSidebar() function
+    }; // end of scrollOpenPopup() function
 
     // define the getImg function
     function getImg(layer, props) {
@@ -681,6 +732,19 @@
       return audioContent;
     }; // end getAudio function
 
+    // the following gets the offset between the map central meridian and visible map central meridian
+    function getWinDiff() {
+      // the longitude of the right side of the map
+      const rightLng = map.getBounds().getNorthEast().lng;
+      // the longitude of the left side of the visible map
+      const leftLng = map.containerPointToLatLng([sidebar._container.getBoundingClientRect().right,0]).lng;
+      // get the longitudinal distance between the edges of the visible map, divide by 2, and add to the longitude of the left side to get the visible map's central meridian
+      const centerLng = leftLng + ((rightLng - leftLng) / 2);
+      // get the difference between the map's central meridian and the visible map's central meridian
+      const winDiff = centerLng - L.latLng(map.getCenter()).lng;
+      return winDiff;
+    }; // end getWinDiff function
+
     // define the function to download map code
     function downloadCode(markersGeoJSON, name) {
       // create a new index.html file and allow user to save
@@ -752,8 +816,9 @@
                         '<script src="https://cdn.jsdelivr.net/gh/jebowe3/CSV-2-Storymap/js/leaflet-sidebar.js"><\/script>' +
                         '<script>const markersGeoJSON = ' + JSON.stringify(markersGeoJSON) + ';<\/script>' +
                         '<script>' +
-                          'const markerZoom = 14;' +
                           'const map = L.map("map", {center: [0, -70], zoom: 2 });' +
+                          'L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png").addTo(map);' +
+                          'L.control.scale({position: "bottomright"}).addTo(map);' +
                           'const sidebar = L.control.sidebar("sidebar").addTo(map);' +
                           'sidebar.open("home");' +
                           'const chapterContent = [];' +
@@ -763,122 +828,74 @@
                           'const scrollCoords = [];' +
                           'const points = [];' +
                           'const chapterNames = [];' +
-                          'let mapTimeout = null;' +
-                          'if (mapTimeout) clearTimeout(mapTimeout);' +
-                          'mapTimeout = setTimeout(function() {' +
-                            'L.tileLayer(\'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png\', {attribution: \'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>\', subdomains: \'abcd\', maxZoom: 20}).addTo(map);' +
-                            'L.control.scale({position: "bottomright"}).addTo(map);' +
-                            'drawMap(markersGeoJSON);' +
-                          '}, 500);' +
-                          'function drawMap(markersGeoJSON) {' +
-                            '(markersGeoJSON.features).forEach(function(entry){' +
-                              'chapterNames.push(entry.properties.chapter);' +
-                            '});' +
-                            'const eachChapter = chapterNames.filter((v, i, a) => a.indexOf(v) === i);' +
-                            'let tmpHTML = \'<select><option value="0">All</option>\';' +
-                            'for (let csv = 0; csv < eachChapter.length; csv++) tmpHTML += \'<option value="\' + eachChapter[csv] + \'">\' + eachChapter[csv] + \'</option>\';' +
-                            'tmpHTML += \'</select>\';' +
-                            'document.getElementById("chapter-select").innerHTML = tmpHTML;' +
-                            'const paletteMap = new Map();' +                 
-                            'for (let i = 0; i < eachChapter.length; i++) {var palette; const r = Math.floor(Math.random() * 255); const g = Math.floor(Math.random() * 255); const b = Math.floor(Math.random() * 255); palette = "rgb(" + r + "," + g + "," + b + ")"; paletteMap.set(eachChapter[i], palette)};' +
-                            'const markers = L.geoJSON(markersGeoJSON, {' +
-                              'pointToLayer: function(feature, latlng) {' +
-                                'return L.marker(latlng, {' +
-                                  'icon: new L.DivIcon.SVGIcon({' +
-                                    'color: paletteMap.get(feature.properties.chapter),' +
-                                    'fillColor: paletteMap.get(feature.properties.chapter),' +
-                                    'fillOpacity: 0.8,' +
-                                    'iconSize: [25, 35]' +
-                                  '})' +
-                                '});' +
-                              '},' +
-                              'onEachFeature: function(feature, layer) {' +
-                                'const props = feature.properties;' +
-                                'layer.bindPopup(\'<b><h2>\'' + '+ props.name +' + '"</h2></b><span class=\'br\'></span><h3>"' + '+ props.chapter +' + '\'<hr>\' + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>"' + '+ props.description +' + '"</h3>");'  +
-                                "layer.on('mouseover', function() {" +
-                                  "$('.leaflet-container').css('cursor', 'pointer');" +
-                                '});' +
-                                "layer.on('mouseout', function() {" +
-                                  "$('.leaflet-container').css('cursor', '');" +
-                                '});' +
-                              '}' +
-                            '}).addTo(map);' +
-                            'selectedLayers.addLayer(markers);' +    
-                            'markers.eachLayer(function(layer) {' +
-                              'const props = layer.feature.properties;' +
-                              'var imgContent = getImg(layer, props);' +
-                              'var vidContent = getVid(layer, props);' +
-                              'var audioContent = getAudio(layer, props);' +
-                              'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class=\'brmedium\'></span></div>");' +
-                            '});' +
-                            'const scrollEndHeight = 200;' +
-                            'chapterContent.push("<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
-                            'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
+                          'const centerDiff = [];' +
+                          'const winDiff = getWinDiff();' +
+                          'centerDiff.push(winDiff);' +
+                          'window.addEventListener("resize", function() {' +
+                            'centerDiff.length = 0;' +
                             'const winDiff = getWinDiff();' +
-                            "$('#chapter-select')[0].onchange = function(e) {" +
-                              'filterMarkers(markers, winDiff);' +
-                            '};' +
-                            'scrollMarkers(markers, winDiff);' +
-                            'scrollOpenPopup(markers);' +                          
-                          '};' +
-                          'function scrollMarkers(markers, winDiff) { ' +
-                            'map.fitBounds(markers.getBounds());' +
-                            'let scrollTimeout = null;' +
-                            '$(\'.sidebar-content\').on("scroll", function(e) {' +
-                              'scrollCoords.length = 0;' +
-                              '$(\'.story\').each(function() {' +
-                                'const midLine = $(window).height() / 2;' +
-                                'const divStart = $(this).offset().top;' +
-                                'const divEnd = divStart + $(this)[0].offsetHeight;' +
-                                'const lat = $(this)[0].getAttribute(\'data-point\').split(\',\')[0];' +
-                                'const lng = $(this)[0].getAttribute(\'data-point\').split(\',\')[1];' +
-                                'if (divStart < midLine && divEnd > midLine) {' +
-                                '$(this)[0].style.backgroundColor = "#EFEEEC";' +
-                                  'points.splice(0, points.length - 1);' +
-                                  'const point = $(this)[0].getAttribute(\'data-point\');' +
-                                  'points.push(point);' +
-                                  'if (points[0] != points[1]) {' +
-                                    'if (scrollTimeout) clearTimeout(scrollTimeout);' +
-                                    'scrollTimeout = setTimeout(function() {' +
-                                      'map.flyTo([lat, lng - winDiff], markerZoom);' +
-                                    '}, 200);' +
-                                  '}' +
-                                  'scrollCoords.push(lng, lat);' +
-                                '} else {' +
-                                  '$(this)[0].style.backgroundColor = "white";' +
-                                '}' +
-                                'window.addEventListener(\'resize\', function() {' +
-                                  'if (divStart < midLine && divEnd > midLine) {' +
-                                    'map.flyTo([lat, lng - winDiff], markerZoom);' +
-                                  '}' +
-                                '});' +
+                            'centerDiff.push(winDiff);' +
+                          '});' +
+                          'map.on(\'zoomend\', function() {' +
+                            'centerDiff.length = 0;' +
+                            'const winDiff = getWinDiff();' +
+                            'centerDiff.push(winDiff);' +
+                          '});' +
+                          '(markersGeoJSON.features).forEach(function(entry){' +
+                            'chapterNames.push(entry.properties.chapter);' +
+                          '});' +
+                          'const eachChapter = chapterNames.filter((v, i, a) => a.indexOf(v) === i);' +
+                          'let tmpHTML = ' + "'" + '<select><option value=' + '"0"'+ '>All</option>' + "';" +
+                          'for (let csv = 0; csv < eachChapter.length; csv++) tmpHTML +=' + '\'<option value="\'' + ' + eachChapter[csv] + ' + '\'">\'' + ' + eachChapter[csv] + ' + '\'</option>\';' +
+                          'tmpHTML += "</select>";' +
+                          'document.getElementById("chapter-select").innerHTML = tmpHTML;' +
+                          'const paletteMap = new Map();' +
+                          'for (let i = 0; i < eachChapter.length; i++) {var palette; const r = Math.floor(Math.random() * 255); const g = Math.floor(Math.random() * 255); const b = Math.floor(Math.random() * 255); palette = "rgb(" + r + "," + g + "," + b + ")"; paletteMap.set(eachChapter[i], palette)};' +
+                          'const markers = L.geoJSON(markersGeoJSON, {' +
+                            'pointToLayer: function(feature, latlng) {' +
+                              'return L.marker(latlng, {' +
+                                'icon: new L.DivIcon.SVGIcon({' +
+                                  'color: paletteMap.get(feature.properties.chapter),' +
+                                  'fillColor: paletteMap.get(feature.properties.chapter),' +
+                                  'fillOpacity: 0.8,' +
+                                  'iconSize: [25, 35]' +
+                                '})' +
                               '});' +
-                            '});' +
+                            '},' +
+                            'onEachFeature: function(feature, layer) {' +
+                              'const props = feature.properties;' +
+                              'layer.bindPopup(\'<b><h2>\'' + '+ props.name +' + '"</h2></b><span class=\'br\'></span><h3>"' + '+ props.chapter +' + '\'<hr>\' + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><b><h2>Description:</h2></b><span class=\'br\'></span><h3>"' + '+ props.description +' + '"</h3>");'  +
+                              "layer.on('mouseover', function() {" +
+                                "$('.leaflet-container').css('cursor', 'pointer');" +
+                              '});' +
+                              "layer.on('mouseout', function() {" +
+                                "$('.leaflet-container').css('cursor', '');" +
+                              '});' +
+                            '}' +
+                          '}).addTo(map);' +
+                          'selectedLayers.addLayer(markers);' +
+                          'markers.eachLayer(function(layer) {' +
+                            'const props = layer.feature.properties;' +
+                            'var imgContent = getImg(layer, props);' +
+                            'var vidContent = getVid(layer, props);' +
+                            'var audioContent = getAudio(layer, props);' +
+                            'chapterContent.push("<div class=\'story\' data-point=\'" + props.Y + "," + props.X + "\'><b><h2>" + props.name + "</h2></b><span class=\'br\'></span><h3>" + props.chapter + "<span class=\'br\'></span>" + "</h3><span class=\'brmedium\'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class=\'brmedium\'></span></div>");' +
+                          '});' +
+                          'const scrollEndHeight = 200;' +
+                          'chapterContent.push("<div><b><h2>See the Code</h2></b><span class=\'br\'></span><h3>To see the code for this map, please go to: <a href=\'https://github.com/jebowe3/CSV-2-Storymap\'>CSV-2-Storymap</a>.</h3><p style=\'padding-bottom:" + scrollEndHeight + "px\'></p></div>");' +
+                          'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
+                          "$('#chapter-select')[0].onchange = function(e) {" +
+                            'filterMarkers(markers);' +
                           '};' +
-                          'function scrollOpenPopup(markers) {' +
-                            'let popupTimeout = null;' +
-                            '$(\'.sidebar-content\').on("scroll", function() {' +
-                              'if (popupTimeout) clearTimeout(popupTimeout);' +
-                              'popupTimeout = setTimeout(function() {' +
-                                'markers.eachLayer(function(layer){' +
-                                  'const markerCoords = layer.feature.geometry.coordinates;' +
-                                  'if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {' +
-                                    'layer.fire(\'click\');' +
-                                    'layer.setZIndexOffset(1000);' +
-                                  '} else {' +
-                                    'layer.setZIndexOffset(0);' +
-                                  '}' +
-                                '});' +
-                              '}, 200);' +
-                            '});' +
-                          '};' +
-                          'function filterMarkers(markers, winDiff) {' +
-                            'let filterTimeout = null;' +
+                          'scrollMarkers(markers);' +
+                          'scrollOpenPopup(markers);' +
+                          'function filterMarkers(markers) {' +
+                            'let scrollTimeout = null;' +
                             'chapterContent.length = 0;' +
                             'info.innerHTML = chapterContent.join("");' +
                             'chapterSelected.length = 0;' +
                             'selectedLayers.clearLayers();' +
-                            'chapterSelected.push($(\'#chapter-select\')[0].value);' +
+                            'chapterSelected.push($("#chapter-select")[0].value);' +
                             'markers.eachLayer(function(layer) {' +
                               'const props = layer.feature.properties;' +
                               'var imgContent = getImg(layer, props);' +
@@ -899,32 +916,79 @@
                             'info.innerHTML = chapterContent.join("<span class=\'br\'></span>");' +
                             'const firstStoryLat = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[0];' +
                             'const firstStoryLng = $(\'.story\')[0].getAttribute(\'data-point\').split(\',\')[1];' +
-                            'if (filterTimeout) clearTimeout(filterTimeout);' +
-                            'filterTimeout = setTimeout(function() {' +
-                              'map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);' +
+                            'const firstStoryZoom = 14;' +
+                            'map.setZoom(firstStoryZoom);' +
+                            'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                            'scrollTimeout = setTimeout(function() {' +
+                              'map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);' +
                             '}, 200);' +
+                            'map.flyTo([parseFloat(firstStoryLat), parseFloat(firstStoryLng)], firstStoryZoom);' +
                             'markers.eachLayer(function(layer) {' +
                               'const markerCoords = layer.feature.geometry.coordinates;' +
                               'if (markerCoords[0] === firstStoryLng && markerCoords[1] === firstStoryLat) {' +
                                 'layer.fire(\'click\');' +
                                 'layer.setZIndexOffset(1000);' +
-                                'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng - winDiff], markerZoom);' +
+                                'map.flyTo([layer.getLatLng().lat, layer.getLatLng().lng], 14);' +
                               '} else {' +
                                 'layer.setZIndexOffset(0);' +
                               '}' +
                             '});' +
                             'window.addEventListener(\'resize\', function() {' +
-                              'map.flyTo([firstStoryLat, firstStoryLng - winDiff], markerZoom);' +
+                              'map.flyTo([firstStoryLat, firstStoryLng - centerDiff[0]], firstStoryZoom);' +
                             '});' +
                           '};' +
-                          'function getWinDiff() {' +
-                            'map.setZoom(markerZoom);' +
-                            'const rightLng = map.getBounds().getNorthEast().lng;' +
-                            'const leftLng = map.containerPointToLatLng([document.getElementById(\'sidebar\').getBoundingClientRect().right,0]).lng;' +
-                            'const centerLng = leftLng + ((rightLng - leftLng) / 2);' +
-                            'const winDiff = centerLng - L.latLng(map.getCenter()).lng;' +
-                            'map.setZoom(2);' +
-                            'return winDiff;' +
+                          'function scrollMarkers(markers) {' +
+                            'map.fitBounds(markers.getBounds());' +
+                            'var scrollTimeout = null;' +
+                            '$(\'.sidebar-content\').on("scroll", function(e) {' +
+                              'scrollCoords.length = 0;' +
+                              '$(\'.story\').each(function() {' +
+                                'const midLine = $(window).height() / 2;' +
+                                'const divStart = $(this).offset().top;' +
+                                'const divEnd = divStart + $(this)[0].offsetHeight;' +
+                                'const lat = $(this)[0].getAttribute(\'data-point\').split(\',\')[0];' +
+                                'const lng = $(this)[0].getAttribute(\'data-point\').split(\',\')[1];' +
+                                'const zoom = 14;' +
+                                'if (divStart < midLine && divEnd > midLine) {' +
+                                  '$(this)[0].style.backgroundColor = "#EFEEEC";' +
+                                  'points.splice(0, points.length - 1);' +
+                                  'const point = $(this)[0].getAttribute(\'data-point\');' +
+                                  'points.push(point);' +
+                                  'if (points[0] != points[1]) {' +
+                                    'map.setZoom(zoom);' +
+                                    'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                                    'scrollTimeout = setTimeout(function() {' +
+                                      'map.flyTo([lat, lng - centerDiff[0]], zoom);' +
+                                    '}, 200);' +
+                                  '}' +
+                                  'scrollCoords.push(lng, lat);' +
+                                '} else {' +
+                                  '$(this)[0].style.backgroundColor = "white";' +
+                                '}' +
+                                'window.addEventListener(\'resize\', function() {' +
+                                  'if (divStart < midLine && divEnd > midLine) {' +
+                                    'map.flyTo([lat, lng - centerDiff[0]], 14);' +
+                                  '}' +
+                                '});' +
+                              '});' +
+                            '});' +
+                          '};' +
+                          'function scrollOpenPopup(markers) {' +
+                            'var scrollTimeout = null;' +
+                            '$(\'.sidebar-content\').on("scroll", function() {' +
+                              'if (scrollTimeout) clearTimeout(scrollTimeout);' +
+                              'scrollTimeout = setTimeout(function() {' +
+                                'markers.eachLayer(function(layer){' +
+                                  'const markerCoords = layer.feature.geometry.coordinates;' +
+                                  'if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {' +
+                                    'layer.fire(\'click\');' +
+                                    'layer.setZIndexOffset(1000);' +
+                                  '} else {' +
+                                    'layer.setZIndexOffset(0);' +
+                                  '}' +
+                                '});' +
+                              '}, 200);' +
+                            '});' +
                           '};' +
                           'function getImg(layer, props) {' +
                             'let siteImage = props.image_url;' +
@@ -979,6 +1043,13 @@
                               'var audioContent = "";' +
                             '};' +
                             'return audioContent;' +
+                          '};' +
+                          'function getWinDiff() {' +
+                            'const rightLng = map.getBounds().getNorthEast().lng;' +
+                            'const leftLng = map.containerPointToLatLng([sidebar._container.getBoundingClientRect().right,0]).lng;' +
+                            'const centerLng = leftLng + ((rightLng - leftLng) / 2);' +
+                            'const winDiff = centerLng - L.latLng(map.getCenter()).lng;' +
+                            'return winDiff;' +
                           '};' +
                         '<\/script>' +
                       '<\/body>' +
