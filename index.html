@@ -400,8 +400,8 @@
 
     // define the scrollMarkers function
     function scrollMarkers(markers, winDiff) {
-      // fit the map to the markers
-      map.fitBounds(markers.getBounds());
+      // fit the map to the markers adding padding to the top left so all markers are visible with the sidebar open
+      map.fitBounds(markers.getBounds(), {paddingTopLeft: [document.getElementById('sidebar').getBoundingClientRect().right,0]});
       // set the scrollTimeout to null
       let scrollTimeout = null;
        // detects a scroll event in the sidebar
@@ -837,7 +837,7 @@
                             'scrollOpenPopup(markers);' +
                           '};' +
                           'function scrollMarkers(markers, winDiff) { ' +
-                            'map.fitBounds(markers.getBounds());' +
+                            'map.fitBounds(markers.getBounds(), {paddingTopLeft: [document.getElementById(\'sidebar\').getBoundingClientRect().right,0]});' +
                             'let scrollTimeout = null;' +
                             '$(\'.sidebar-content\').on("scroll", function(e) {' +
                               'scrollCoords.length = 0;' +
