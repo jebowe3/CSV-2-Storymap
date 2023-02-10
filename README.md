@@ -68,5 +68,5 @@ If you want to self-host or customize the resulting map, you can download the co
 
 Check your computer's download folder. All of the required code is inside this file.
 
-![Result](images/code.PNG)
+![Result](images/output-code.PNG)
 **Figure 09**. The Resulting Code
