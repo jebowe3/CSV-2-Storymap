@@ -274,9 +274,10 @@
     const chapterSelected = [];
     const selectedLayers = L.featureGroup().addTo(map);
     const info = document.getElementById("content-info");
-    const scrollCoords = [];
     const points = [];
     const chapterNames = [];
+    const scrollOrds = [];
+    const orders = [];
     let mapTimeout = null;
     if (mapTimeout) clearTimeout(mapTimeout);
     mapTimeout = setTimeout(function() {
@@ -338,7 +339,7 @@
         var imgContent = getImg(layer, props);
         var vidContent = getVid(layer, props);
         var audioContent = getAudio(layer, props);
-        chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+        chapterContent.push("<div class='story' order='" + props.order + "' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
           "</h3><span class='brmedium'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class='brmedium'></span></div>");
       });
       const scrollEndHeight = 200;
@@ -359,25 +360,27 @@
       });
       let scrollTimeout = null;
       $('.sidebar-content').on("scroll", function(e) {
-        scrollCoords.length = 0;
+        scrollOrds.length = 0;
         $('.story').each(function() {
           const midLine = $(window).height() / 2;
           const divStart = $(this).offset().top;
           const divEnd = divStart + $(this)[0].offsetHeight;
           const lat = $(this)[0].getAttribute('data-point').split(',')[0];
           const lng = $(this)[0].getAttribute('data-point').split(',')[1];
+          const order = $(this)[0].getAttribute('order');
           if (divStart < midLine && divEnd > midLine) {
             $(this)[0].style.backgroundColor = "#EFEEEC";
             points.splice(0, points.length - 1);
             const point = $(this)[0].getAttribute('data-point');
             points.push(point);
-            if (points[0] != points[1]) {
+            orders.push(order);
+            if (points[0] != points[1] || points[0] == points[1] && orders[0] != orders[1]) {
               if (scrollTimeout) clearTimeout(scrollTimeout);
               scrollTimeout = setTimeout(function() {
                 map.flyTo([lat, lng - winDiff], markerZoom);
               }, 200);
             }
-            scrollCoords.push(lng, lat);
+            scrollOrds.push(order);
           } else {
             $(this)[0].style.backgroundColor = "white";
           }
@@ -397,8 +400,8 @@
         if (popupTimeout) clearTimeout(popupTimeout);
         popupTimeout = setTimeout(function() {
           markers.eachLayer(function(layer) {
-            const markerCoords = layer.feature.geometry.coordinates;
-            if (markerCoords[0] === scrollCoords[0] && markerCoords[1] === scrollCoords[1]) {
+            const markerOrds = layer.feature.properties.order;
+            if (markerOrds === scrollOrds[0]) {
               layer.fire('click');
               layer.setZIndexOffset(1000);
             } else {
@@ -422,11 +425,11 @@
         var audioContent = getAudio(layer, props);
         if (chapterSelected[0] == props.chapter) {
           selectedLayers.addLayer(layer);
-          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+          chapterContent.push("<div class='story' order='" + props.order + "' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
             "</h3><span class='brmedium'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class='brmedium'></span></div>");
         } else if (chapterSelected[0] == 0) {
           selectedLayers.addLayer(layer);
-          chapterContent.push("<div class='story' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
+          chapterContent.push("<div class='story' order='" + props.order + "' data-point='" + props.Y + "," + props.X + "'><b><h2>" + props.name + "</h2></b><span class='br'></span><h3>" + props.chapter + "<span class='br'></span>" +
             "</h3><span class='brmedium'></span><h3>" + props.description + "</h3>" + imgContent + vidContent + audioContent + "<span class='brmedium'></span></div>");
         } else {
           selectedLayers.removeLayer(layer);
